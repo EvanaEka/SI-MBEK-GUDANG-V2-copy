@@ -58,6 +58,11 @@ class Authenticate
             return route('admin.login');
         }
 
+        # For owner
+         if (Route::is('owner.*')) {
+            return route('owner.login');
+         }
+
         # For else part - normal user
         return route('login');
     }

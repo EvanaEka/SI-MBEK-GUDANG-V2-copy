@@ -5,10 +5,10 @@ use App\Http\Controllers\Owner\Auth\OwnerForgotPasswordController;
 use App\Http\Controllers\Owner\Auth\OwnerResetPasswordController;
 use App\Http\Controllers\Owner\DashboardController;
 use App\Http\Controllers\Owner\ProfileController;
-use App\Http\Controllers\Admin\KambingController;
-use App\Http\Controllers\Admin\DombaController;
-use App\Http\Controllers\Admin\PenjualanController;
-use App\Http\Controllers\Admin\PurchaseOrderController;
+use App\Http\Controllers\Owner\KambingController;
+use App\Http\Controllers\Owner\DombaController;
+use App\Http\Controllers\Owner\PenjualanController;
+use App\Http\Controllers\Owner\PurchaseOrderController;
 use App\Http\Controllers\WarehouseDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -43,12 +43,6 @@ Route::prefix('owner')->name('owner.')->group(function () {
         // Logout
         Route::post('logout', [OwnerAuthController::class, 'destroy'])->name('logout');
 
-        // Change Password (tanpa middleware must.change.password)
-        Route::get('change-password', [ProfileController::class, 'showChangePasswordForm'])
-            ->name('password.change.form');
-        Route::post('change-password', [ProfileController::class, 'changePassword'])
-            ->name('password.change');
-
         // ============================================
         // PROTECTED ROUTES (dengan must.change.password)
         // ============================================
@@ -79,24 +73,37 @@ Route::prefix('owner')->name('owner.')->group(function () {
             // Dashboard (Read-only)
             Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-            // Profile (Read-only, hanya bisa update password)
-            Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
+           // Profile Management
+            Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
+            Route::patch('profile', [ProfileController::class, 'update'])->name('profile.update');
+            Route::delete('profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+            Route::post('change-password', [ProfileController::class, 'changePassword'])->name('password.change');
 
-            // Kambing (Read-only)
-            Route::get('kambing', [KambingController::class, 'index'])->name('kambing.index');
+            // Kambing 
+            Route::get('listkambing', [KambingController::class, 'index'])->name('kambing.list');
             Route::get('kambing/{kambing}', [KambingController::class, 'show'])->name('kambing.show');
             Route::get('kambing/{id}/monitoring', [KambingController::class, 'monitoring'])->name('kambing.monitoring');
 
-            // Domba (Read-only)
-            Route::get('domba', [DombaController::class, 'index'])->name('domba.index');
+            // Domba 
+            Route::get('listdomba', [DombaController::class, 'index'])->name('domba.list');
             Route::get('domba/{domba}', [DombaController::class, 'show'])->name('domba.show');
             Route::get('domba/{id}/monitoring', [DombaController::class, 'monitoring'])->name('domba.monitoring');
 
-            // Penjualan (Read-only)
+             // Penitip 
+            Route::get('penitip/{type?}', [ProfileController::class, 'penitip'])
+                ->where('type', 'kambing|domba')
+                ->name('penitip');
+
+            // Perjanjian & Penjualan
+            Route::get('perjanjian', [DashboardController::class, 'perjanjian'])
+                ->name('perjanjian');
+
+             // Perjanjian & Penjualan
+            Route::get('perjanjian', [DashboardController::class, 'perjanjian'])->name('perjanjian');
             Route::get('penjualan', [DashboardController::class, 'penjualan'])->name('penjualan');
             Route::get('penjualan/invoice/{order_id}', [PenjualanController::class, 'invoice'])->name('penjualan.invoice');
             Route::get('penjualan/manual-invoice/{order_id}', [PenjualanController::class, 'manualInvoice'])->name('penjualan.manual-invoice');
-
+            
             // Reports (Read-only)
             Route::get('reports/kambing', [DashboardController::class, 'kambingReport'])->name('reports.kambing');
             Route::get('reports/domba', [DashboardController::class, 'dombaReport'])->name('reports.domba');

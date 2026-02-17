@@ -76,9 +76,29 @@ class KambingController extends Controller
                 $image->width() * 0.5,
                 $image->height() * 0.5
             );
+            $fileName = "raman" . time() . '_' . $file->getClientOriginalName();
+            $image = Image::read($file);
+
+            $image->resize(
+            $image->width() * 0.5,
+            $image->height() * 0.5
+            );
+
+            // Tentukan folder
+            $uploadPath = public_path('uploads');
+
+            // Kalau folder belum ada, buat otomatis
+            if (!file_exists($uploadPath)) {
+            mkdir($uploadPath, 0777, true);
+            }
+
+            // Path lengkap file
             $filePath = 'uploads/' . $fileName;
-            $image->save(public_path($filePath), $fileName);
-        }
+
+            // Save gambar
+            $image->save($uploadPath . '/' . $fileName);
+
+            }
 
         Kambing::create([
             'user_id' => $request->user_id,
@@ -130,7 +150,6 @@ class KambingController extends Controller
 
             $file = $request->file('image');
             $fileName = "ramanU" . time() . '_' . $file->getClientOriginalName();
-            $filePath = 'uploads/' . $fileName;
             $image = Image::read($file);
 
             $image->resize(
@@ -138,9 +157,21 @@ class KambingController extends Controller
                 $image->height() * 0.5
             );
 
-            $image->save(public_path($filePath), $fileName);
+            // Tentukan folder
+            $uploadPath = public_path('uploads');
 
-            $data['image'] = $filePath;
+            // Buat folder kalau belum ada
+            if (!file_exists($uploadPath)) {
+            mkdir($uploadPath, 0777, true);
+            }
+
+            $filePath = 'uploads/' . $fileName;
+
+            // Save
+            $image->save($uploadPath . '/' . $fileName);
+
+$data['image'] = $filePath;
+
         }
 
         $kambing->update($data);

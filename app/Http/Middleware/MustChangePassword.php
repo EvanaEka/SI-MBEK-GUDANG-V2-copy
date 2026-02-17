@@ -40,12 +40,11 @@ class MustChangePassword
                 $guard . '.logout',
             ];
 
-            // Jika bukan route yang diperbolehkan, redirect ke change password
-            if (!$request->routeIs($allowedRoutes)) {
+             if (!$request->routeIs($allowedRoutes)) {
                 return redirect()->route($guard . '.profile.edit')
                     ->with('warning', 'Anda harus mengganti password terlebih dahulu.');
-            }
         }
+    }
 
         return $next($request);
     }

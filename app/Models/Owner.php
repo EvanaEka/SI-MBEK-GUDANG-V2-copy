@@ -19,6 +19,7 @@ class Owner extends Authenticatable
         'name',
         'email',
         'password',
+        'must_change_password',
         'phone',
         'profile_picture',
     ];
