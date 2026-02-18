@@ -13,7 +13,16 @@ return new class extends Migration {
             $table->enum('kategori', ['pakan', 'obat']);
             $table->string('satuan');
             $table->integer('stok')->default(0);
-            $table->integer('stok_min')->default(0);
+
+            $table->decimal('pemakaian_rata_rata', 10, 2)
+                ->default(0);
+
+            $table->integer('lead_time')
+                ->default(0);
+
+            $table->integer('safety_stock')
+                ->default(5);
+                
             $table->text('deskripsi')->nullable();
             $table->timestamps();
         });

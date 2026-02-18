@@ -46,6 +46,12 @@ class DatabaseSeeder extends Seeder
             DombaHistorySeeder::class,
             KambingHistorySeeder::class,
         ]);
+
+        //6. Indikator QC
+        $this->call([
+            QcIndicatorSeeder::class,
+            ProductionQcSeeder::class,
+        ]);
     }
 
 }

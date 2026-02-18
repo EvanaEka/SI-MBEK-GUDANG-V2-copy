@@ -14,6 +14,9 @@ return new class extends Migration {
                 ->constrained()
                 ->cascadeOnDelete();
 
+            $table->enum('type', ['material', 'product'])
+                ->default('material');
+
             $table->date('tanggal_pesan');
             $table->enum('status', [
                 'draft',
@@ -25,8 +28,8 @@ return new class extends Migration {
             // owner & admin
             $table->morphs('dipesan_oleh');
 
-            $table->foreignId('dicatat_oleh')
-                ->constrained('admins');
+            // owner & admin
+            $table->morphs('dicatat_oleh');
 
             $table->text('catatan_owner')->nullable();
             $table->timestamps();

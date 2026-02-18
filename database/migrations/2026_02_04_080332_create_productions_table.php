@@ -15,20 +15,52 @@ return new class extends Migration {
                 ->constrained()
                 ->cascadeOnDelete();
 
-            // Produk jadi (material hasil produksi)
+            // Produk jadi
             $table->foreignId('product_id')
                 ->constrained('products')
                 ->cascadeOnDelete();
 
-            // Jumlah produksi
-            $table->integer('qty_produksi');      // kg direncanakan
-            $table->integer('qty_qc_lulus')->default(0);
-            $table->integer('qty_qc_gagal')->default(0);
+            // Jumlah produksi (kg)
+            $table->integer('qty_produksi');
 
-            // Status produksi
+            /**
+             * ======================
+             * QC RESULT (SUMMARY)
+             * ======================
+             */
+
+            // Status hasil QC
+            $table->enum('qc_status', [
+                'pending',
+                'layak',
+                'tidak_layak',
+            ])->default('pending');
+
+            // Persentase indikator non-kritis yang lolos
+            $table->decimal('qc_percentage', 5, 2)
+                ->nullable()
+                ->comment('Persentase kelulusan indikator non-kritis');
+
+            // Ambang kelayakan QC (default 80%)
+            $table->decimal('qc_threshold', 5, 2)
+                ->default(80)
+                ->comment('Minimal persentase kelayakan QC');
+
+            // Tanggal produksi nyata
+            $table->date('production_date');
+
+            // Expired date
+            $table->date('expired_date')->nullable();
+
+            /**
+             * ======================
+             * STATUS PRODUKSI
+             * ======================
+             */
             $table->enum('status', [
                 'diproses',
                 'selesai',
+                'rejected',
             ])->default('diproses');
 
             // Dicatat oleh admin

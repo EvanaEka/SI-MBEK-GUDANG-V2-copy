@@ -63,12 +63,12 @@ Route::prefix('owner')->name('owner.')->group(function () {
                     Route::post('/', [PurchaseOrderController::class, 'store'])
                         ->name('store');
 
-                    Route::put('/{purchaseOrder}/approve', [PurchaseOrderController::class, 'approve'])
+                    Route::patch('/{purchaseOrder}/approve', [PurchaseOrderController::class, 'approve'])
                         ->name('approve');
                 });
-            
+
             //Warehouse
-            Route::get('/warehouse',[WarehouseDashboardController::class, 'index'])->name('warehouse.dashboard');
+            Route::get('/warehouse', [WarehouseDashboardController::class, 'index'])->name('warehouse.dashboard');
 
             // Dashboard (Read-only)
             Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');

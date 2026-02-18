@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Admin\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\Auth\AdminForgotPasswordController;
 use App\Http\Controllers\Admin\Auth\AdminResetPasswordController;
@@ -16,6 +15,8 @@ use App\Http\Controllers\Admin\PurchaseOrderController;
 use App\Http\Controllers\WarehouseDashboardController;
 use App\Http\Controllers\Admin\ProductionController;
 use App\Http\Controllers\Admin\ProductAllocationController;
+use App\Http\Controllers\Admin\ProductionQcController;
+use App\Http\Controllers\Admin\DisposalController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->name('admin.')->group(function () {
@@ -69,7 +70,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
                     Route::post('/', [PurchaseOrderController::class, 'store'])
                         ->name('store');
 
-                    Route::put('/{purchaseOrder}/receive', [PurchaseOrderController::class, 'receive'])
+                    Route::patch('/{purchaseOrder}/approve', [PurchaseOrderController::class, 'approve'])
+                        ->name('approve');
+
+                    Route::post('/{purchaseOrder}/receive', [PurchaseOrderController::class, 'receive'])
                         ->name('receive');
                 });
 
@@ -78,11 +82,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/productions', [ProductionController::class, 'store'])
                 ->name('productions.store');
 
-            Route::put('/productions/{production}/qc', [ProductionController::class, 'qc'])
-                ->name('productions.qc');
+            Route::put(
+                '/productions/{production}/qc',
+                [ProductionController::class, 'qc']
+            )->name('productions.qc');
 
-            Route::put('/productions/{production}/selesai', [ProductionController::class, 'selesai'])
-                ->name('productions.selesai');
+            Route::put(
+                '/productions/{production}/selesai',
+                [ProductionController::class, 'selesai']
+            )->name('productions.selesai');
 
             Route::post(
                 '/products/{product}/allocations/internal',
@@ -94,7 +102,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
                 [ProductAllocationController::class, 'sell']
             )->name('product.allocations.sell');
 
+            Route::post(
+                '/productions/{production}/qc',
+                [ProductionQcController::class, 'store']
+            )->name('qc.store');
 
+            //Disposal
+            Route::post('/disposal/material/{stock}', [DisposalController::class, 'disposeMaterial']);
+            Route::post('/disposal/production/{production}', [DisposalController::class, 'disposeProduction']);
 
             //Warehouse
             Route::get('/warehouse', [WarehouseDashboardController::class, 'index'])->name('warehouse.dashboard');

@@ -16,11 +16,18 @@ return new class extends Migration {
             // stok produk jadi (kg)
             $table->decimal('stok', 10, 2)->default(0);
 
+            //ROP
+            $table->integer('rop')
+                ->default(0);
+
             // relasi ke formula
             $table->foreignId('formula_id')
                 ->nullable()
                 ->constrained('formulas')
                 ->nullOnDelete();
+
+            //Tipe sumber produk
+            $table->enum('type', ['produksi', 'pembelian']);
 
             // siapa admin yg buat data produk
             $table->foreignId('created_by')

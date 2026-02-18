@@ -16,8 +16,11 @@ class Production extends Model
         'product_id',
         'formula_id',
         'qty_produksi',
-        'qty_qc_lulus',
-        'qty_qc_gagal',
+        'qc_status',
+        'qc_percentage',
+        'qc_threshold',
+        'production_date',
+        'expired_date',
         'status',
         'created_by',
     ];
@@ -55,4 +58,10 @@ class Production extends Model
     {
         return $this->status === 'selesai';
     }
+
+    public function disposals()
+    {
+        return $this->morphMany(Disposal::class, 'disposable');
+    }
+
 }

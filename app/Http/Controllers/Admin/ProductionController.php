@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Formula;
-use App\Models\Material;
+use App\Models\MaterialStock;
 use App\Models\Production;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -54,19 +54,60 @@ class ProductionController extends Controller
                 }
             }
 
-            // 📉 KURANGI STOK BAHAN BAKU
+            // 📉 KURANGI STOK BAHAN BAKU (FIFO)
             foreach ($formula->materials as $material) {
+
                 $kebutuhan = $request->qty_produksi
                     * ($material->pivot->persentase / 100);
 
+                $remainingQty = $kebutuhan;
+
+                // Ambil batch paling lama dulu (FIFO)
+                /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Models\MaterialStock> $batches */
+                $batches = MaterialStock::where('material_id', $material->id)
+                    ->where('qty', '>', 0)
+                    ->where(function ($q) {
+                        $q->whereNull('expired_date')
+                            ->orWhere('expired_date', '>=', now());
+                    })
+                    ->orderBy('received_date', 'asc') // FIFO
+                    ->lockForUpdate()
+                    ->get();
+
+
+                foreach ($batches as $batch) {
+
+                    if ($remainingQty <= 0)
+                        break;
+
+                    if ($batch->qty >= $remainingQty) {
+                        // Batch cukup
+                        $batch->decrement('qty', $remainingQty);
+                        $remainingQty = 0;
+                    } else {
+                        // Batch tidak cukup → habiskan batch
+                        $remainingQty -= $batch->qty;
+                        $batch->update(['qty' => 0]);
+                    }
+                }
+
+                if ($remainingQty > 0) {
+                    throw new \Exception(
+                        "Batch bahan {$material->nama_bahan} tidak mencukupi"
+                    );
+                }
+
+                // Tetap kurangi stok summary
                 $material->decrement('stok', $kebutuhan);
             }
+
 
             // 🏭 SIMPAN DATA PRODUKSI
             Production::create([
                 'formula_id' => $formula->id,
                 'product_id' => $product->id,
                 'qty_produksi' => $request->qty_produksi,
+                'production_date' => now(),
                 'status' => 'diproses',
                 'created_by' => auth('admin')->id(),
             ]);
@@ -85,11 +126,6 @@ class ProductionController extends Controller
         }
     }
 
-    /**
-     * 2️⃣ Input hasil QC
-     * - hanya update data QC
-     * - tidak mengubah stok apapun
-     */
     public function qc(Request $request, Production $production)
     {
         if ($production->status !== 'diproses') {
@@ -99,33 +135,81 @@ class ProductionController extends Controller
         }
 
         $request->validate([
-            'qty_qc_lulus' => 'required|numeric|min:0',
-            'qty_qc_gagal' => 'required|numeric|min:0',
+            'indicators' => 'required|array',
+            'qc_threshold' => 'required|numeric|min:70|max:90',
         ]);
 
-        if (
-            ($request->qty_qc_lulus + $request->qty_qc_gagal)
-            !== $production->qty_produksi
-        ) {
-            return back()->withErrors([
-                'qc' => 'Total QC harus sama dengan jumlah produksi',
-            ]);
+        $totalNonCritical = 0;
+        $lulusNonCritical = 0;
+        $status = 'layak';
+
+        foreach ($request->indicators as $indicatorId => $result) {
+            $indicator = \App\Models\QcIndicator::findOrFail($indicatorId);
+
+            // Jika indikator critical gagal → langsung tidak layak
+            if ($indicator->is_critical && $result === 'gagal') {
+                $status = 'tidak_layak';
+            }
+
+            // Hitung non critical untuk persentase
+            if (!$indicator->is_critical) {
+                $totalNonCritical++;
+
+                if ($result === 'lulus') {
+                    $lulusNonCritical++;
+                }
+            }
         }
 
-        $production->update([
-            'qty_qc_lulus' => $request->qty_qc_lulus,
-            'qty_qc_gagal' => $request->qty_qc_gagal,
-        ]);
+        $percentage = $totalNonCritical > 0
+            ? ($lulusNonCritical / $totalNonCritical) * 100
+            : 100;
+
+        // Jika persentase di bawah threshold → tidak layak
+        if ($percentage < $request->qc_threshold) {
+            $status = 'tidak_layak';
+        }
+
+        DB::transaction(function () use ($production, $status, $percentage, $request) {
+
+            // Update production (hasil QC)
+            $production->update([
+                'qc_status' => $status,
+                'qc_percentage' => $percentage,
+                'qc_threshold' => $request->qc_threshold,
+            ]);
+
+            // Simpan log QC
+            \App\Models\ProductionQc::create([
+                'production_id' => $production->id,
+                'status' => $status,
+                'score_non_kritis' => $percentage,
+                'threshold' => $request->qc_threshold,
+                'catatan' => $request->catatan ?? null,
+                'created_by' => auth('admin')->id(),
+            ]);
+
+            // 🔥 AUTO DISPOSAL JIKA QC GAGAL
+            if ($status === 'tidak_layak') {
+
+                $production->disposals()->create([
+                    'quantity' => $production->qty_produksi,
+                    'reason' => 'qc_failed',
+                    'created_by' => auth('admin')->id(),
+                ]);
+
+                // Ubah status produksi jadi rejected
+                $production->update([
+                    'status' => 'rejected',
+                ]);
+            }
+        });
+
 
         return redirect()->back()
             ->with('success', 'QC berhasil disimpan');
     }
 
-    /**
-     * 3️⃣ Selesaikan produksi
-     * - tambah stok produk jadi (hanya QC lulus)
-     * - ubah status menjadi selesai
-     */
     public function selesai(Production $production)
     {
         if ($production->status === 'selesai') {
@@ -134,19 +218,30 @@ class ProductionController extends Controller
             ]);
         }
 
-        if (($production->qty_qc_lulus + $production->qty_qc_gagal) === 0) {
+        if ($production->status === 'rejected') {
             return back()->withErrors([
-                'qc' => 'QC belum diinput',
+                'status' => 'Produksi sudah ditolak dan tidak bisa diselesaikan',
+            ]);
+        }
+
+        if (!$production->qc_status) {
+            return back()->withErrors([
+                'qc' => 'QC belum dilakukan',
+            ]);
+        }
+
+        if ($production->qc_status !== 'layak') {
+            return back()->withErrors([
+                'qc' => 'Produksi tidak layak untuk diselesaikan',
             ]);
         }
 
         DB::beginTransaction();
 
         try {
-            // 📦 TAMBAH STOK PRODUK JADI
             $production->product->increment(
                 'stok',
-                $production->qty_qc_lulus
+                $production->qty_produksi
             );
 
             $production->update([
@@ -155,12 +250,12 @@ class ProductionController extends Controller
 
             DB::commit();
 
-            return redirect()->back()
-                ->with('success', 'Produksi selesai & stok produk bertambah');
+            return back()->with('success', 'Produksi selesai & stok produk bertambah');
 
         } catch (\Throwable $e) {
             DB::rollBack();
             throw $e;
         }
     }
+
 }

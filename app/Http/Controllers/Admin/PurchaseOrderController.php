@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Material;
+use App\Models\MaterialStock;
 use App\Models\Supplier;
 use App\Models\Owner;
 use Illuminate\Http\Request;
@@ -84,6 +85,7 @@ class PurchaseOrderController extends Controller
             $po = PurchaseOrder::create([
                 'kode_po' => $kode_po,
                 'supplier_id' => $request->supplier_id,
+                'type' => $request->type,
                 'tanggal_pesan' => $request->tanggal_pesan,
                 'status' => 'draft',
 
@@ -138,18 +140,13 @@ class PurchaseOrderController extends Controller
      */
     public function approve(PurchaseOrder $purchaseOrder)
     {
-        // Pastikan yang approve adalah owner dan bukan admin
-        if (Auth::guard('admin')->check()) {
-            abort(403, 'Admin tidak boleh approve Purchase Order');
-        }
-
         if (!Auth::guard('owner')->check()) {
-            abort(403, 'Hanya owner yang bisa approve Purchase Order');
+            abort(403);
         }
 
-        // Pastikan status masih draft
+
         if ($purchaseOrder->status !== 'draft') {
-            return back()->with('error', 'Purchase Order hanya bisa disetujui jika masih berstatus draft');
+            throw new \Exception('Purchase Order hanya bisa disetujui jika masih draft');
         }
 
         $purchaseOrder->update([
@@ -165,39 +162,118 @@ class PurchaseOrderController extends Controller
      */
     public function receive(Request $request, PurchaseOrder $purchaseOrder)
     {
-        // Load relasi yang dibutuhkan
-        $purchaseOrder->load('items.material');
+        if (!Auth::guard('admin')->check()) {
+            abort(403, 'Hanya admin yang bisa menerima barang');
+        }
 
-        // ⛔ Pastikan PO sudah approved
+        if ($purchaseOrder->status === 'diterima') {
+            throw new \Exception('Purchase Order sudah selesai.');
+        }
+
         if ($purchaseOrder->status !== 'dipesan') {
-            return back()->with('error', 'Purchase Order belum disetujui atau sudah diterima');
+            return back()->with('error', 'Purchase Order belum disetujui');
+        }
+
+        if (empty($request->items)) {
+            throw new \Exception('Items cannot be empty');
         }
 
         $request->validate([
             'items' => 'required|array',
             'items.*.id' => 'required|exists:purchase_order_items,id',
             'items.*.jumlah_diterima' => 'required|integer|min:0',
+            'items.*.expired_date' => 'nullable|date',
         ]);
 
         DB::transaction(function () use ($request, $purchaseOrder) {
 
             foreach ($request->items as $data) {
-                $item = PurchaseOrderItem::findOrFail($data['id']);
 
-                // Update jumlah diterima
+                $item = PurchaseOrderItem::where('id', $data['id'])
+                    ->where('purchase_order_id', $purchaseOrder->id)
+                    ->firstOrFail();
+
+                $jumlahPesan = $item->jumlah;
+                $jumlahDiterimaBaru = (int) $data['jumlah_diterima'];
+
+                // 🔒 Tidak boleh double receive (perbaikan di sini)
+                if ($item->jumlah_diterima !== null && $item->jumlah_diterima != 0) {
+                    throw new \Exception('Item sudah pernah diterima.');
+                }
+
+
+
+
+                // Hitung selisih
+                $selisih = $jumlahDiterimaBaru - $jumlahPesan;
+
+                // Update item
                 $item->update([
-                    'jumlah_diterima' => $data['jumlah_diterima']
+                    'jumlah_diterima' => $jumlahDiterimaBaru,
+                    'selisih' => $selisih,
                 ]);
 
-                // Update stok material
-                $material = $item->material;
-                $material->increment('stok', $data['jumlah_diterima']);
+                /*
+                |--------------------------------------------------------------------------
+                | Jika PO Material → Buat Batch Stock
+                |--------------------------------------------------------------------------
+                */
+                if ($purchaseOrder->type === 'material') {
+
+                    $material = $item->material;
+
+                    if (!$material) {
+                        throw new \Exception('Material tidak ditemukan.');
+                    }
+
+                    MaterialStock::create([
+                        'material_id' => $material->id,
+                        'qty' => $jumlahDiterimaBaru,
+                        'received_date' => now(),
+                        'expired_date' => $data['expired_date'] ?? null,
+                        'created_by' => auth('admin')->id(),
+                    ]);
+
+                    $material->increment('stok', $jumlahDiterimaBaru);
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Jika PO Product → Tambah stok product
+                |--------------------------------------------------------------------------
+                */ elseif ($purchaseOrder->type === 'product') {
+
+                    $product = $item->product;
+
+                    if (!$product) {
+                        throw new \Exception('Produk tidak ditemukan.');
+                    }
+
+                    $product->increment('stok', $jumlahDiterimaBaru);
+                }
             }
 
-            $purchaseOrder->update([
-                'status' => 'diterima',
-                'tanggal_diterima' => now(),
-            ]);
+            /*
+            |--------------------------------------------------------------------------
+            | Update Status PO
+            |--------------------------------------------------------------------------
+            */
+
+            // ✅ Perbaikan: cek jumlah_diterima > 0
+            $allReceived = $purchaseOrder->items()
+                ->where(function ($q) {
+                    $q->whereNull('jumlah_diterima')
+                        ->orWhere('jumlah_diterima', '<=', 0);
+                })
+                ->count() === 0;
+
+
+            if ($allReceived) {
+                $purchaseOrder->update([
+                    'status' => 'diterima',
+                    'tanggal_diterima' => now(),
+                ]);
+            }
         });
 
         return back()->with('success', 'Barang berhasil diterima dan stok telah diperbarui');

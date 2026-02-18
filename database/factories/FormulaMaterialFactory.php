@@ -16,7 +16,7 @@ class FormulaMaterialFactory extends Factory
         return [
             'formula_id' => Formula::factory(),
             'material_id' => Material::factory(),
-            'qty_per_unit' => $this->faker->numberBetween(1, 10),
+            'percentage' => $this->faker->randomFloat(2, 1, 100),
         ];
     }
 }

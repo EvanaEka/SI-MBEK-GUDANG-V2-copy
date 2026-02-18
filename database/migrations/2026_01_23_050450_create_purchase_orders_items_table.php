@@ -11,14 +11,16 @@ return new class extends Migration {
             $table->id();
 
             $table->foreignId('purchase_order_id')
-                  ->constrained()
-                  ->cascadeOnDelete();
+                ->constrained()
+                ->cascadeOnDelete();
 
-            $table->foreignId('material_id')
-                  ->constrained()
-                  ->cascadeOnDelete();
+            $table->foreignId('material_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('product_id')->nullable()->constrained()->cascadeOnDelete();
+
 
             $table->integer('jumlah');
+            $table->integer('jumlah_diterima')->nullable();
+            $table->integer('selisih')->default(0);
             $table->decimal('harga_satuan', 12, 2)->nullable();
             $table->decimal('subtotal', 14, 2)->nullable();
             $table->timestamps();

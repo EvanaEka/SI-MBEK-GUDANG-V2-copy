@@ -12,8 +12,10 @@ class PurchaseOrderItem extends Model
     protected $fillable = [
         'purchase_order_id',
         'material_id',
+        'product_id',
         'jumlah',
         'jumlah_diterima', 
+        'selisih',
         'harga_satuan',
         'subtotal',
     ];

@@ -90,4 +90,16 @@ class Material extends Model
         return $this->hasMany(Production::class, 'produk_material_id');
     }
 
+    public function disposals()
+    {
+        return $this->morphMany(Disposal::class, 'disposable');
+    }
+
+    public function materialStocks()
+    {
+        return $this->hasMany(MaterialStock::class);
+    }
+
+
+
 }

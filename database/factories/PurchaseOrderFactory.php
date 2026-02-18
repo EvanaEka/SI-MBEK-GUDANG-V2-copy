@@ -14,35 +14,38 @@ class PurchaseOrderFactory extends Factory
 
     public function definition(): array
     {
-        // Default: dipesan oleh Owner, dicatat oleh Owner juga
+        // Default: Owner pesan
         $pemesan = Owner::factory()->create();
-        $pencatat = $pemesan; // Yang pesan = yang catat (default)
+
+        // Default: yang mencatat juga Owner
+        $pencatat = $pemesan;
 
         return [
-            'kode_po' => 'PO-' . now()->format('Ymd') . '-' . $this->faker->unique()->numberBetween(1000, 9999),
+            'kode_po' => 'PO-' . now()->format('Ymd') . '-' .
+                $this->faker->unique()->numberBetween(1000, 9999),
+
             'supplier_id' => Supplier::factory(),
+
+            'type' => 'material',
+
             'tanggal_pesan' => $this->faker->date(),
-            'status' => $this->faker->randomElement([
-                'draft',
-                'dipesan',
-                'diterima',
-                'dibatalkan'
-            ]),
-            
-            // Yang pesan
+
+            'status' => 'draft',
+
+            // ✅ Morph dipesan_oleh
             'dipesan_oleh_id' => $pemesan->id,
             'dipesan_oleh_type' => get_class($pemesan),
-            
-            // ✅ PERBAIKAN: Yang catat (polymorphic)
+
+            // ✅ Morph dicatat_oleh
             'dicatat_oleh_id' => $pencatat->id,
             'dicatat_oleh_type' => get_class($pencatat),
-            
+
             'catatan_owner' => $this->faker->optional()->sentence(),
         ];
     }
 
     /**
-     * PO dipesan oleh Admin, dicatat oleh Admin
+     * PO dipesan oleh Admin
      */
     public function dipesanOlehAdmin(): self
     {
@@ -59,7 +62,7 @@ class PurchaseOrderFactory extends Factory
     }
 
     /**
-     * Admin catat PO untuk Owner
+     * Admin mencatat untuk Owner
      */
     public function adminCatatUntukOwner(): self
     {
@@ -70,21 +73,19 @@ class PurchaseOrderFactory extends Factory
             return [
                 'dipesan_oleh_id' => $owner->id,
                 'dipesan_oleh_type' => get_class($owner),
-                'dicatat_oleh_id' => $admin->id,  // Yang catat = Admin
+                'dicatat_oleh_id' => $admin->id,
                 'dicatat_oleh_type' => get_class($admin),
             ];
         });
     }
 
     /**
-     * PO dengan status tertentu
+     * Set status tertentu
      */
     public function status(string $status): self
     {
-        return $this->state(function () use ($status) {
-            return [
-                'status' => $status,
-            ];
-        });
+        return $this->state(fn() => [
+            'status' => $status,
+        ]);
     }
 }
