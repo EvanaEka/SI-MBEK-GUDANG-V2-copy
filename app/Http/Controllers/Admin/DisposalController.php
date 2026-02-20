@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\MaterialStock;
 use App\Models\Production;
+use App\Models\Disposal;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -15,9 +17,11 @@ class DisposalController extends Controller
      */
     public function disposeMaterial(Request $request, MaterialStock $stock)
     {
-        $request->validate([
+        $validated = $request->validate([
             'reason' => 'required|string|max:255',
         ]);
+
+        $disposal = Disposal::create($validated);
 
         if ($stock->qty <= 0) {
             return back()->withErrors([
@@ -45,6 +49,18 @@ class DisposalController extends Controller
                 'qty' => 0
             ]);
 
+            $actor = $this->getCurrentActor();
+            if ($actor) {
+                ActivityLog::create([
+                    'actor_id' => $actor->id,
+                    'actor_type' => get_class($actor),
+                    'type' => 'disposal_created',
+                    'module' => 'disposal',
+                    'description' => 'Membuat disposal untuk produk #' . $disposal->product->kode
+                ]);
+            }
+
+
             DB::commit();
 
             return back()->with('success', 'Bahan berhasil didisposal.');
@@ -62,10 +78,12 @@ class DisposalController extends Controller
      */
     public function disposeProduction(Request $request, Production $production)
     {
-        $request->validate([
+        $validated = $request->validate([
             'reason' => 'required|string|max:255',
         ]);
-        
+
+        $disposal = Disposal::create($validated);
+
         if ($production->status !== 'selesai') {
             return back()->withErrors([
                 'status' => 'Produksi belum selesai atau tidak valid untuk disposal.',

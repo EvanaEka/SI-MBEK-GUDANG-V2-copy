@@ -19,7 +19,7 @@ class Admin extends Authenticatable
         'name',
         'email',
         'password',
-        'role',  // 👈 TAMBAHAN
+        'role',
         'must_change_password',
         'phone',
         'profile_picture',
@@ -72,5 +72,11 @@ class Admin extends Authenticatable
     {
         return $this->hasMany(Production::class, 'dicatat_oleh');
     }
+
+    public function activities()
+    {
+        return $this->morphMany(ActivityLog::class, 'actor');
+    }
+
 
 }

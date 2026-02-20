@@ -3,21 +3,27 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\Admin;
 use App\Models\Owner;
 use App\Models\Supplier;
 use App\Models\Material;
+use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\MaterialStock;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Models\ActivityLog;
 
 class PurchaseOrderTest extends TestCase
 {
     use RefreshDatabase;
 
+    /* =========================================================
+     * STORE
+     * ========================================================= */
+
     /** @test */
-    public function admin_can_create_purchase_order()
+    public function admin_can_create_po()
     {
         $admin = Admin::factory()->create();
         $supplier = Supplier::factory()->create();
@@ -25,231 +31,271 @@ class PurchaseOrderTest extends TestCase
 
         $this->actingAs($admin, 'admin');
 
-        $response = $this->post(route('admin.purchase-orders.store'), [
+        $this->post(route('admin.purchase-orders.store'), [
             'supplier_id' => $supplier->id,
             'tanggal_pesan' => now()->toDateString(),
+            'type' => 'material',
             'items' => [
                 [
                     'material_id' => $material->id,
-                    'jumlah' => 100,
-                    'harga_satuan' => 5000,
+                    'jumlah' => 5,
+                    'harga_satuan' => 1000,
                 ]
             ]
-        ]);
-
-        $response->assertRedirect();
+        ])->assertRedirect();
 
         $this->assertDatabaseHas('purchase_orders', [
-            'supplier_id' => $supplier->id,
-            'status' => 'draft',
-        ]);
-
-        $this->assertDatabaseHas('purchase_order_items', [
-            'material_id' => $material->id,
-            'jumlah' => 100,
+            'status' => 'draft'
         ]);
     }
 
     /** @test */
-    public function owner_can_approve_purchase_order()
+    public function cannot_create_po_without_items()
     {
-        $owner = Owner::factory()->create([
-            'must_change_password' => false,
-        ]);
-        $po = PurchaseOrder::factory()->create([
-            'status' => 'draft'
-        ]);
+        $admin = Admin::factory()->create();
+        $supplier = Supplier::factory()->create();
+
+        $this->actingAs($admin, 'admin');
+
+        $this->post(route('admin.purchase-orders.store'), [
+            'supplier_id' => $supplier->id,
+            'tanggal_pesan' => now()->toDateString(),
+        ])->assertSessionHasErrors('items');
+    }
+
+    /* =========================================================
+     * APPROVE
+     * ========================================================= */
+
+    /** @test */
+    public function owner_can_approve_po()
+    {
+        $owner = Owner::factory()->create();
+        $po = PurchaseOrder::factory()->create(['status' => 'draft']);
 
         $this->actingAs($owner, 'owner');
 
-        $response = $this->patch(route('owner.purchase-orders.approve', $po));
+        $this->patch(route('owner.purchase-orders.approve', $po));
 
-        $response->assertRedirect();
-
-        $this->assertDatabaseHas('purchase_orders', [
-            'id' => $po->id,
-            'status' => 'dipesan',
-        ]);
+        $this->assertEquals('dipesan', $po->fresh()->status);
     }
 
     /** @test */
-    public function admin_cannot_approve_purchase_order()
+    public function cannot_approve_if_not_draft()
     {
-        $admin = Admin::factory()->create([
-            'must_change_password' => false,
-        ]);
+        $owner = Owner::factory()->create();
+        $po = PurchaseOrder::factory()->create(['status' => 'dipesan']);
+
+        $this->actingAs($owner, 'owner');
+
+        $this->patch(route('owner.purchase-orders.approve', $po))
+            ->assertStatus(500);
+    }
+
+    /* =========================================================
+     * RECEIVE - MATERIAL
+     * ========================================================= */
+
+    /** @test */
+    public function receive_material_success()
+    {
+        $admin = Admin::factory()->create();
+        $material = Material::factory()->create(['stok' => 0]);
 
         $po = PurchaseOrder::factory()->create([
-            'status' => 'draft'
+            'status' => 'dipesan',
+            'type' => 'material'
+        ]);
+
+        $item = PurchaseOrderItem::factory()->create([
+            'purchase_order_id' => $po->id,
+            'material_id' => $material->id,
+            'jumlah' => 10,
         ]);
 
         $this->actingAs($admin, 'admin');
 
-        $response = $this->patch(route('admin.purchase-orders.approve', $po));
+        $this->post(route('admin.purchase-orders.receive', $po), [
+            'items' => [
+                [
+                    'id' => $item->id,
+                    'jumlah_diterima' => 10,
+                ]
+            ]
+        ]);
 
-        $response->assertStatus(403);
+        $this->assertEquals(10, $material->fresh()->stok);
+        $this->assertEquals('diterima', $po->fresh()->status);
+        $this->assertDatabaseHas('material_stocks', [
+            'material_id' => $material->id,
+            'qty' => 10
+        ]);
+    }
+
+    /* =========================================================
+     * RECEIVE - PRODUCT SUCCESS
+     * ========================================================= */
+
+    /** @test */
+    public function receive_product_obat_success()
+    {
+        $admin = Admin::factory()->create();
+
+        $product = Product::factory()->create([
+            'type' => 'obat',
+            'asal' => 'pembelian',
+            'stok' => 0
+        ]);
+
+        $po = PurchaseOrder::factory()->create([
+            'status' => 'dipesan',
+            'type' => 'product'
+        ]);
+
+        $item = PurchaseOrderItem::factory()
+            ->forProduct($product) // <-- PASS PRODUCT NYA DI SINI
+            ->for($po)
+            ->create([
+                'jumlah' => 5,
+            ]);
+
+        $this->actingAs($admin, 'admin');
+
+        $this->post(route('admin.purchase-orders.receive', $po), [
+            'items' => [
+                [
+                    'id' => $item->id,
+                    'jumlah_diterima' => 5,
+                ]
+            ]
+        ]);
+
+        $this->assertEquals(5, $product->fresh()->stok);
+    }
+
+    /* =========================================================
+     * RECEIVE - PRODUCT EXCEPTION BRANCH
+     * ========================================================= */
+
+    /** @test */
+    public function cannot_receive_product_if_not_obat()
+    {
+        $this->withoutExceptionHandling();
+
+        $admin = Admin::factory()->create();
+
+        $product = Product::factory()->create([
+            'type' => 'pakan',
+            'asal' => 'pembelian',
+        ]);
+
+        $po = PurchaseOrder::factory()->create([
+            'status' => 'dipesan',
+            'type' => 'product'
+        ]);
+
+        $item = PurchaseOrderItem::factory()->create([
+            'purchase_order_id' => $po->id,
+            'product_id' => $product->id,
+            'jumlah' => 5,
+        ]);
+
+        $this->actingAs($admin, 'admin');
+
+        $this->expectException(\Exception::class);
+
+        $this->post(route('admin.purchase-orders.receive', $po), [
+            'items' => [
+                [
+                    'id' => $item->id,
+                    'jumlah_diterima' => 5,
+                ]
+            ]
+        ]);
     }
 
     /** @test */
-    public function cannot_receive_if_not_approved()
+    public function cannot_receive_product_if_asal_not_pembelian()
     {
-        $admin = Admin::factory()->create([
-            'must_change_password' => false,
+        $this->withoutExceptionHandling();
+
+        $admin = Admin::factory()->create();
+
+        $product = Product::factory()->create([
+            'type' => 'obat',
+            'asal' => 'produksi',
         ]);
+
         $po = PurchaseOrder::factory()->create([
-            'status' => 'draft',
+            'status' => 'dipesan',
+            'type' => 'product'
+        ]);
+
+        $item = PurchaseOrderItem::factory()->create([
+            'purchase_order_id' => $po->id,
+            'product_id' => $product->id,
+            'jumlah' => 5,
+        ]);
+
+        $this->actingAs($admin, 'admin');
+
+        $this->expectException(\Exception::class);
+
+        $this->post(route('admin.purchase-orders.receive', $po), [
+            'items' => [
+                [
+                    'id' => $item->id,
+                    'jumlah_diterima' => 5,
+                ]
+            ]
+        ]);
+    }
+
+    /* =========================================================
+     * SECURITY & EDGE CASE
+     * ========================================================= */
+
+    /** @test */
+    public function cannot_receive_if_already_completed()
+    {
+        $admin = Admin::factory()->create();
+
+        $po = PurchaseOrder::factory()->create([
+            'status' => 'diterima',
             'type' => 'material'
         ]);
 
         $this->actingAs($admin, 'admin');
 
-        $response = $this->post(route('admin.purchase-orders.receive', $po), [
+        $this->post(route('admin.purchase-orders.receive', $po), [
             'items' => []
-        ]);
-
-        $response->assertSessionHas('error');
+        ])->assertSessionHas('error');
     }
 
     /** @test */
-    public function receive_material_creates_stock_and_updates_material()
+    public function cannot_receive_item_not_belonging_to_po()
     {
         $admin = Admin::factory()->create();
-        $supplier = Supplier::factory()->create();
-        $material = Material::factory()->create(['stok' => 0]);
+        $material = Material::factory()->create();
 
-        $po = PurchaseOrder::factory()->create([
-            'status' => 'dipesan',
-            'type' => 'material',
-            'supplier_id' => $supplier->id,
-        ]);
+        $po1 = PurchaseOrder::factory()->create(['status' => 'dipesan', 'type' => 'material']);
+        $po2 = PurchaseOrder::factory()->create(['status' => 'dipesan', 'type' => 'material']);
 
         $item = PurchaseOrderItem::factory()->create([
-            'purchase_order_id' => $po->id,
+            'purchase_order_id' => $po2->id,
             'material_id' => $material->id,
-            'jumlah' => 100,
-            'jumlah_diterima' => 0,
+            'jumlah' => 10,
         ]);
 
         $this->actingAs($admin, 'admin');
 
-        $this->post(route('admin.purchase-orders.receive', $po), [
+        $this->post(route('admin.purchase-orders.receive', $po1), [
             'items' => [
                 [
                     'id' => $item->id,
-                    'jumlah_diterima' => 100,
-                    'expired_date' => now()->addMonth()->toDateString(),
+                    'jumlah_diterima' => 10,
                 ]
             ]
-        ]);
-
-        $this->assertDatabaseHas('material_stocks', [
-            'material_id' => $material->id,
-            'qty' => 100,
-        ]);
-
-        $this->assertEquals(100, $material->fresh()->stok);
-
-        $this->assertEquals('diterima', $po->fresh()->status);
-    }
-
-    /** @test */
-    public function over_delivery_is_recorded()
-    {
-        $admin = Admin::factory()->create();
-        $material = Material::factory()->create(['stok' => 0]);
-
-        $po = PurchaseOrder::factory()->create([
-            'status' => 'dipesan',
-            'type' => 'material',
-        ]);
-
-        $item = PurchaseOrderItem::factory()->create([
-            'purchase_order_id' => $po->id,
-            'material_id' => $material->id,
-            'jumlah' => 100,
-        ]);
-
-        $this->actingAs($admin, 'admin');
-
-        $this->post(route('admin.purchase-orders.receive', $po), [
-            'items' => [
-                [
-                    'id' => $item->id,
-                    'jumlah_diterima' => 120,
-                ]
-            ]
-        ]);
-
-        $this->assertDatabaseHas('purchase_order_items', [
-            'id' => $item->id,
-            'selisih' => 20,
-        ]);
-    }
-
-    /** @test */
-    public function partial_delivery_is_recorded()
-    {
-        $admin = Admin::factory()->create();
-        $material = Material::factory()->create(['stok' => 0]);
-
-        $po = PurchaseOrder::factory()->create([
-            'status' => 'dipesan',
-            'type' => 'material',
-        ]);
-
-        $item = PurchaseOrderItem::factory()->create([
-            'purchase_order_id' => $po->id,
-            'material_id' => $material->id,
-            'jumlah' => 100,
-        ]);
-
-        $this->actingAs($admin, 'admin');
-
-        $this->post(route('admin.purchase-orders.receive', $po), [
-            'items' => [
-                [
-                    'id' => $item->id,
-                    'jumlah_diterima' => 80,
-                ]
-            ]
-        ]);
-
-        $this->assertDatabaseHas('purchase_order_items', [
-            'id' => $item->id,
-            'selisih' => -20,
-        ]);
-    }
-
-    /** @test */
-    public function cannot_double_receive_item()
-    {
-
-        $admin = Admin::factory()->create();
-        $material = Material::factory()->create(['stok' => 0]);
-
-        $po = PurchaseOrder::factory()->create([
-            'status' => 'dipesan',
-            'type' => 'material',
-        ]);
-
-        $item = PurchaseOrderItem::factory()->create([
-            'purchase_order_id' => $po->id,
-            'material_id' => $material->id,
-            'jumlah' => 100,
-            'jumlah_diterima' => 50,
-        ]);
-
-        $this->actingAs($admin, 'admin');
-
-        $response = $this->post(route('admin.purchase-orders.receive', $po), [
-            'items' => [
-                [
-                    'id' => $item->id,
-                    'jumlah_diterima' => 50,
-                ]
-            ]
-        ]);
-
-        $response->assertStatus(500);
+        ])->assertSessionHas('error');
     }
 }

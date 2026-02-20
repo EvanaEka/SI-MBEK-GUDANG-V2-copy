@@ -14,6 +14,8 @@ class Product extends Model
         'nama',
         'stok',
         'formula_id',
+        'type',
+        'asal',
         'created_by',
     ];
 

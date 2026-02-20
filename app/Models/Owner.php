@@ -47,4 +47,9 @@ class Owner extends Authenticatable
         return $this->morphMany(PurchaseOrder::class, 'dipesan_oleh');
     }
 
+    public function activities()
+    {
+        return $this->morphMany(ActivityLog::class, 'actor');
+    }
+
 }

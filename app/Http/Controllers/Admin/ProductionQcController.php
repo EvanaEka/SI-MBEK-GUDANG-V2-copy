@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Production;
 use App\Models\ProductionQc;
 use App\Models\QcIndicator;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -89,6 +90,20 @@ class ProductionQcController extends Controller
                 'qc_percentage' => $percentage,
                 'qc_threshold' => $threshold,
             ]);
+
+            $qc = ProductionQc::create($validated);
+
+            $actor = $this->getCurrentActor();
+            if ($actor) {
+                ActivityLog::create([
+                    'actor_id' => $actor->id,
+                    'actor_type' => get_class($actor),
+                    'type' => 'qc_checked',
+                    'module' => 'production_qc',
+                    'description' => 'Melakukan QC untuk Produksi #' . $qc->production->id
+                ]);
+            }
+
 
             DB::commit();
 

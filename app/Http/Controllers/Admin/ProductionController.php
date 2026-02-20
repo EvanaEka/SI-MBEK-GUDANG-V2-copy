@@ -7,6 +7,7 @@ use App\Models\Formula;
 use App\Models\MaterialStock;
 use App\Models\Production;
 use App\Models\Product;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -18,7 +19,7 @@ class ProductionController extends Controller
      * - cek stok bahan baku
      * - kurangi stok bahan baku
      */
-    public function store(Request $request)
+    public function store(Request $request, Production $production )
     {
         $request->validate([
             'formula_id' => 'required|exists:formulas,id',
@@ -111,6 +112,19 @@ class ProductionController extends Controller
                 'status' => 'diproses',
                 'created_by' => auth('admin')->id(),
             ]);
+
+            $actor = $this->getCurrentActor();
+
+            if ($actor) {
+                ActivityLog::create([
+                    'actor_id' => $actor->id,
+                    'actor_type' => get_class($actor),
+                    'type' => 'production_created',
+                    'module' => 'production',
+                    'description' => 'Membuat Produksi #' . $production->id
+                ]);
+            }
+
 
             DB::commit();
 
@@ -247,6 +261,19 @@ class ProductionController extends Controller
             $production->update([
                 'status' => 'selesai',
             ]);
+
+            $actor = $this->getCurrentActor();
+
+            if ($actor) {
+                ActivityLog::create([
+                    'actor_id' => $actor->id,
+                    'actor_type' => get_class($actor),
+                    'type' => 'production_finished',
+                    'module' => 'production',
+                    'description' => 'Menyelesaikan Produksi #' . $production->id
+                ]);
+            }
+
 
             DB::commit();
 

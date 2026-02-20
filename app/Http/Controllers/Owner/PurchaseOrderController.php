@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Owner;
 
 use App\Http\Controllers\Controller;
 use App\Models\PurchaseOrder;
@@ -83,7 +83,6 @@ class PurchaseOrderController extends Controller
                 'kode_po' => $kode_po,
                 'supplier_id' => $request->supplier_id,
                 'type' => $request->type,
-                'asal' => $request->asal,
                 'tanggal_pesan' => $request->tanggal_pesan,
                 'status' => 'draft',
                 'dipesan_oleh_id' => $pemesan->id,
@@ -163,6 +162,7 @@ class PurchaseOrderController extends Controller
 
         // 🔥 Tambahkan ini
         $actor = Auth::guard('owner')->user();
+        dump($actor);
 
         ActivityLog::create([
             'actor_id' => $actor->id,
@@ -199,7 +199,7 @@ class PurchaseOrderController extends Controller
         $request->validate([
             'items' => 'required|array',
             'items.*.id' => 'required|exists:purchase_order_items,id',
-            'items.*.jumlah_diterima' => 'required|integer|min:1',
+            'items.*.jumlah_diterima' => 'required|integer|min:0',
             'items.*.expired_date' => 'nullable|date',
         ]);
 
@@ -213,7 +213,7 @@ class PurchaseOrderController extends Controller
                 return back()->with('error', 'Item tidak ditemukan.');
             }
 
-            if (!empty($item->jumlah_diterima)) {
+            if ($item->jumlah_diterima !== null && $item->jumlah_diterima != 0) {
                 return back()->with('error', 'Item sudah pernah diterima.');
             }
         }
@@ -227,19 +227,20 @@ class PurchaseOrderController extends Controller
                     ->firstOrFail();
 
                 $jumlahPesan = $item->jumlah;
-                $jumlahDiterima = (int) $data['jumlah_diterima'];
+                $jumlahDiterimaBaru = (int) $data['jumlah_diterima'];
 
-                $selisih = $jumlahDiterima - $jumlahPesan;
+                // Hitung selisih
+                $selisih = $jumlahDiterimaBaru - $jumlahPesan;
 
-                // Update item (single receive only)
+                // Update item
                 $item->update([
-                    'jumlah_diterima' => $jumlahDiterima,
+                    'jumlah_diterima' => $jumlahDiterimaBaru,
                     'selisih' => $selisih,
                 ]);
 
                 /*
                 |--------------------------------------------------------------------------
-                | PO TYPE: MATERIAL
+                | Jika PO Material → Buat Batch Stock
                 |--------------------------------------------------------------------------
                 */
                 if ($purchaseOrder->type === 'material') {
@@ -252,36 +253,28 @@ class PurchaseOrderController extends Controller
 
                     MaterialStock::create([
                         'material_id' => $material->id,
-                        'qty' => $jumlahDiterima,
+                        'qty' => $jumlahDiterimaBaru,
                         'received_date' => now(),
                         'expired_date' => $data['expired_date'] ?? null,
                         'created_by' => auth('admin')->id(),
                     ]);
 
-                    $material->increment('stok', $jumlahDiterima);
+                    $material->increment('stok', $jumlahDiterimaBaru);
                 }
 
                 /*
                 |--------------------------------------------------------------------------
-                | PO TYPE: PRODUCT (HANYA OBAT & ASAL PEMBELIAN)
+                | Jika PO Product → Tambah stok product
                 |--------------------------------------------------------------------------
                 */ elseif ($purchaseOrder->type === 'product') {
 
                     $product = $item->product;
 
                     if (!$product) {
-                        throw new \Exception('Product tidak ditemukan.');
+                        throw new \Exception('Produk tidak ditemukan.');
                     }
 
-                    if ($product->type !== 'obat') {
-                        throw new \Exception('Hanya produk obat yang boleh via PO.');
-                    }
-
-                    if ($product->asal !== 'pembelian') {
-                        throw new \Exception('Produk ini bukan dari pembelian.');
-                    }
-
-                    $product->increment('stok', $jumlahDiterima);
+                    $product->increment('stok', $jumlahDiterimaBaru);
                 }
             }
 
@@ -291,12 +284,14 @@ class PurchaseOrderController extends Controller
             |--------------------------------------------------------------------------
             */
 
+            // ✅ Perbaikan: cek jumlah_diterima > 0
             $allReceived = $purchaseOrder->items()
                 ->where(function ($q) {
                     $q->whereNull('jumlah_diterima')
                         ->orWhere('jumlah_diterima', '<=', 0);
                 })
                 ->count() === 0;
+
 
             if ($allReceived) {
                 $purchaseOrder->update([

@@ -14,7 +14,7 @@ class PurchaseOrderItem extends Model
         'material_id',
         'product_id',
         'jumlah',
-        'jumlah_diterima', 
+        'jumlah_diterima',
         'selisih',
         'harga_satuan',
         'subtotal',
@@ -28,5 +28,10 @@ class PurchaseOrderItem extends Model
     public function material(): BelongsTo
     {
         return $this->belongsTo(Material::class);
+    }
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Kambing;
 use App\Models\Domba;
 use App\Models\Order;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -22,11 +23,11 @@ class OrderController extends Controller
     public function __construct()
     {
         // Inisialisasi konfigurasi Midtrans berdasarkan config/midtrans.php
-        Config::$serverKey    = config('midtrans.server_key');
-        Config::$clientKey    = config('midtrans.client_key');
+        Config::$serverKey = config('midtrans.server_key');
+        Config::$clientKey = config('midtrans.client_key');
         Config::$isProduction = config('midtrans.is_production');
-        Config::$isSanitized  = config('midtrans.is_sanitized');
-        Config::$is3ds        = config('midtrans.is_3ds');
+        Config::$isSanitized = config('midtrans.is_sanitized');
+        Config::$is3ds = config('midtrans.is_3ds');
     }
 
     /**
@@ -63,11 +64,11 @@ class OrderController extends Controller
         // 1. Validasi request
         $validated = $request->validate([
             'produk_id' => 'required|integer',
-            'category'  => 'required|string',
-            'email'     => 'required|email',
-            'name'      => 'required|string',
-            'address'   => 'required|string',
-            'phone'     => 'required|string',
+            'category' => 'required|string',
+            'email' => 'required|email',
+            'name' => 'required|string',
+            'address' => 'required|string',
+            'phone' => 'required|string',
         ]);
 
         // 2. Ambil objek produk: bisa Kambing atau Domba
@@ -90,44 +91,44 @@ class OrderController extends Controller
         // 4. Susun item_details dan transaction_details sesuai Midtrans
         $itemDetails = [
             [
-                'id'       => $produk->id,
-                'price'    => (int) $produk->harga,
+                'id' => $produk->id,
+                'price' => (int) $produk->harga,
                 'quantity' => 1,
-                'name'     => ucfirst($request->category ?? 'Produk') . ' - ' . ($produk->name ?? 'Unnamed'),
+                'name' => ucfirst($request->category ?? 'Produk') . ' - ' . ($produk->name ?? 'Unnamed'),
             ]
         ];
-        
+
         $transactionDetails = [
-            'order_id'     => $orderId,
+            'order_id' => $orderId,
             'gross_amount' => (int) $produk->harga,
         ];
-        
+
         $customerDetails = [
-            'first_name'      => $request->name,
-            'email'           => $request->email,
-            'phone'           => $request->phone,
+            'first_name' => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
             'billing_address' => [
-                'first_name'   => $request->name,
-                'address'      => $request->address,
-                'city'         => $request->city ?? 'Unknown',
-                'postal_code'  => '',
-                'phone'        => $request->phone,
+                'first_name' => $request->name,
+                'address' => $request->address,
+                'city' => $request->city ?? 'Unknown',
+                'postal_code' => '',
+                'phone' => $request->phone,
                 'country_code' => 'IDN',
             ],
             'shipping_address' => [
-                'first_name'   => $request->name,
-                'address'      => $request->address,
-                'city'         => $request->city ?? 'Unknown',
-                'postal_code'  => '',
-                'phone'        => $request->phone,
+                'first_name' => $request->name,
+                'address' => $request->address,
+                'city' => $request->city ?? 'Unknown',
+                'postal_code' => '',
+                'phone' => $request->phone,
                 'country_code' => 'IDN',
             ],
         ];
-        
+
         $midtransParams = [
             'transaction_details' => $transactionDetails,
-            'customer_details'    => $customerDetails,
-            'item_details'        => $itemDetails,
+            'customer_details' => $customerDetails,
+            'item_details' => $itemDetails,
         ];
 
         try {
@@ -135,19 +136,31 @@ class OrderController extends Controller
             $snapToken = Snap::getSnapToken($midtransParams);
 
             // 6. Simpan ke tabel orders
-            Order::create([
-                'user_id'        => Auth::id(),
-                'produk_id'      => $produk->id,
-                'order_id'       => $orderId,
-                'snap_token'     => $snapToken,
-                'gross_amount'   => $produk->harga,
-                'status'         => 'pending',
+            $order = Order::create([
+                'user_id' => Auth::id(),
+                'produk_id' => $produk->id,
+                'order_id' => $orderId,
+                'snap_token' => $snapToken,
+                'gross_amount' => $produk->harga,
+                'status' => 'pending',
                 'payment_method' => 'midtrans',
-                'name'           => $request->name,
-                'address'        => $request->address,
-                'phone'          => $request->phone,
-                'qty'            => 1,
+                'name' => $request->name,
+                'address' => $request->address,
+                'phone' => $request->phone,
+                'qty' => 1,
             ]);
+
+            ActivityLog::create([
+                'actor_id' => Auth::id(),
+                'actor_type' => \App\Models\User::class,
+                'type' => 'order_create',
+                'module' => 'order',
+                'description' => 'Membuat order Midtrans. Order ID: ' . $order->order_id .
+                    ', Produk ID: ' . $produk->id .
+                    ', Total: ' . $produk->harga,
+            ]);
+
+
 
             return response()->json([
                 'snap_token' => $snapToken,
@@ -162,12 +175,12 @@ class OrderController extends Controller
     public function invoice($order_id)
     {
         $order = Order::where('order_id', $order_id)->with(['user', 'kambing', 'domba'])->firstOrFail();
-        
+
         // Pastikan hanya user terkait yang bisa akses invoice-nya
         if (auth()->id() !== $order->user_id && !auth()->user()->is_superadmin) {
             abort(403);
         }
-        
+
         return view('order.invoice', compact('order'));
     }
 
@@ -206,8 +219,19 @@ class OrderController extends Controller
             default:
                 $order->status = $transactionStatus;
         }
-        
+
         $order->save();
+
+        ActivityLog::create([
+            'actor_id' => $order->user_id, // atau null kalau mau tandai system
+            'actor_type' => \App\Models\User::class,
+            'type' => 'order_update',
+            'module' => 'order',
+            'description' => 'Webhook update status. Order ID: ' . $order->order_id .
+                ', Status: ' . $order->status,
+        ]);
+
+
 
         // Ambil produk terkait
         $produk = Kambing::find($order->produk_id) ?: Domba::find($order->produk_id);
@@ -228,26 +252,26 @@ class OrderController extends Controller
     public function transaksi()
     {
         $orders = Order::where('user_id', auth()->id())
-                      ->with(['kambing', 'domba'])
-                      ->latest()
-                      ->get();
+            ->with(['kambing', 'domba'])
+            ->latest()
+            ->get();
         return view('order.transaksi', compact('orders'));
     }
 
     public function manualTransfer(Request $request)
     {
         $validated = $request->validate([
-            'produk_id'       => 'required|integer',
-            'category'        => 'required|in:kambing,domba',
-            'email'           => 'required|email',
-            'name'            => 'required|string|max:255',
-            'address'         => 'required|string',
-            'phone'           => 'required|string|max:20',
-            'sender_name'     => 'required|string|max:255',
-            'bank_origin'     => 'required|string|max:255',
-            'transfer_date'   => 'required|date',
+            'produk_id' => 'required|integer',
+            'category' => 'required|in:kambing,domba',
+            'email' => 'required|email',
+            'name' => 'required|string|max:255',
+            'address' => 'required|string',
+            'phone' => 'required|string|max:20',
+            'sender_name' => 'required|string|max:255',
+            'bank_origin' => 'required|string|max:255',
+            'transfer_date' => 'required|date',
             'transfer_amount' => 'required|numeric|min:1',
-            'transfer_proof'  => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'transfer_proof' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         // Cari produk
@@ -264,34 +288,45 @@ class OrderController extends Controller
         try {
             // Buat order
             $order = Order::create([
-                'user_id'        => Auth::id(),
-                'produk_id'      => $produk->id,
-                'order_id'       => $orderId,
-                'snap_token'     => null,
-                'gross_amount'   => $request->transfer_amount,
-                'status'         => 'pending',
+                'user_id' => Auth::id(),
+                'produk_id' => $produk->id,
+                'order_id' => $orderId,
+                'snap_token' => null,
+                'gross_amount' => $request->transfer_amount,
+                'status' => 'pending',
                 'payment_method' => 'manual',
-                'name'           => $request->name,
-                'address'        => $request->address,
-                'phone'          => $request->phone,
-                'qty'            => 1,
+                'name' => $request->name,
+                'address' => $request->address,
+                'phone' => $request->phone,
+                'qty' => 1,
                 'bukti_transfer' => $proofPath,
-                'sender_name'    => $request->sender_name,
-                'bank_origin'    => $request->bank_origin,
-                'transfer_date'  => $request->transfer_date,
+                'sender_name' => $request->sender_name,
+                'bank_origin' => $request->bank_origin,
+                'transfer_date' => $request->transfer_date,
             ]);
+
+            ActivityLog::create([
+                'actor_id' => Auth::id(),
+                'actor_type' => \App\Models\User::class,
+                'type' => 'order_create',
+                'module' => 'order',
+                'description' => 'Membuat order manual. Order ID: ' . $order->order_id .
+                    ', Nominal: ' . $request->transfer_amount,
+            ]);
+
+
 
             return response()->json([
                 'order_id' => $order->order_id,
-                'message'  => 'Transfer manual berhasil disimpan'
+                'message' => 'Transfer manual berhasil disimpan'
             ]);
-            
+
         } catch (\Exception $e) {
             // Hapus file jika ada error
             if (Storage::disk('public')->exists($proofPath)) {
                 Storage::disk('public')->delete($proofPath);
             }
-            
+
             return response()->json([
                 'error' => 'Gagal menyimpan data transfer: ' . $e->getMessage()
             ], 500);
@@ -301,15 +336,15 @@ class OrderController extends Controller
     public function manualInvoice($order_id)
     {
         $order = Order::where('order_id', $order_id)
-                     ->where('payment_method', 'manual')
-                     ->with(['user', 'kambing', 'domba'])
-                     ->firstOrFail();
-        
+            ->where('payment_method', 'manual')
+            ->with(['user', 'kambing', 'domba'])
+            ->firstOrFail();
+
         // Pastikan hanya user terkait yang bisa akses
         if (auth()->id() !== $order->user_id && !auth()->user()->is_superadmin) {
             abort(403);
         }
-        
+
         return view('order.manual-invoice', compact('order'));
     }
 
@@ -329,6 +364,18 @@ class OrderController extends Controller
             $order->status = $status;
             $order->admin_notes = $notes; // Simpan notes
             $order->save();
+
+            ActivityLog::create([
+                'actor_id' => Auth::id(),
+                'actor_type' => \App\Models\User::class,
+                'type' => 'order_update',
+                'module' => 'order',
+                'description' => 'Webhook update status. Order ID: ' . $order->order_id .
+                    ', Status: ' . $order->status,
+            ]);
+
+
+
 
             // Update produk status
             if ($status === 'settlement') {
@@ -351,20 +398,31 @@ class OrderController extends Controller
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
-        
+
     }
 
     public function updateOrderNotes(Request $request, $orderId)
     {
         try {
             $order = Order::findOrFail($orderId);
-            
+
             $request->validate([
                 'notes' => 'required|string'
             ]);
 
             $order->admin_notes = $request->notes;
             $order->save();
+
+            ActivityLog::create([
+                'actor_id' => Auth::id(),
+                'actor_type' => \App\Models\User::class,
+                'type' => 'order_update',
+                'module' => 'order',
+                'description' => 'Webhook update status. Order ID: ' . $order->order_id .
+                    ', Status: ' . $order->status,
+            ]);
+
+
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {

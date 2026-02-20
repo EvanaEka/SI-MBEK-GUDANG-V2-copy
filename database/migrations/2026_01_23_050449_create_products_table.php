@@ -26,8 +26,11 @@ return new class extends Migration {
                 ->constrained('formulas')
                 ->nullOnDelete();
 
-            //Tipe sumber produk
-            $table->enum('type', ['produksi', 'pembelian']);
+            //Tipe Produk
+            $table->enum('type', ['pakan', 'obat']);
+
+            //Asal sumber produk
+            $table->enum('asal', ['produksi', 'pembelian']);
 
             // siapa admin yg buat data produk
             $table->foreignId('created_by')

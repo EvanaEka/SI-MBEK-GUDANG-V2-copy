@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductAllocation;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -15,7 +16,7 @@ class ProductAllocationController extends Controller
      */
     public function storeOrUpdate(Request $request, Product $product)
     {
-        $request->validate([
+        $validated = $request->validate([
             'type' => 'required|in:jual,internal',
             'qty' => 'required|integer|min:0',
         ]);
@@ -45,6 +46,20 @@ class ProductAllocationController extends Controller
                     'created_by' => auth('admin')->id(),
                 ]
             );
+
+            $allocation = ProductAllocation::create($validated);
+
+            $actor = $this->getCurrentActor();
+            if ($actor) {
+                ActivityLog::create([
+                    'actor_id' => $actor->id,
+                    'actor_type' => get_class($actor),
+                    'type' => 'allocation_created',
+                    'module' => 'product_allocation',
+                    'description' => 'Membuat alokasi produk #' . $allocation->id
+                ]);
+            }
+
 
             DB::commit();
 
