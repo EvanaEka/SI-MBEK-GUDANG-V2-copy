@@ -27,7 +27,7 @@ class PurchaseOrderController extends Controller
             'dicatatOleh'
         ])->latest()->get();
 
-        return view('admin.purchase-orders.index', compact('purchaseOrders'));
+        return view('owner.purchase-orders.index', compact('purchaseOrders'));
     }
 
     /**
@@ -38,7 +38,7 @@ class PurchaseOrderController extends Controller
         $suppliers = Supplier::all();
         $materials = Material::all();
 
-        return view('admin.purchase-orders.create', compact('suppliers', 'materials'));
+        return view('owner.purchase-orders.create', compact('suppliers', 'materials'));
     }
 
     /**
@@ -138,7 +138,7 @@ class PurchaseOrderController extends Controller
             'dicatatOleh'
         ])->findOrFail($id);
 
-        return view('admin.purchase-orders.show', compact('po'));
+        return view('owner.purchase-orders.show', compact('po'));
     }
 
     /**
@@ -162,7 +162,7 @@ class PurchaseOrderController extends Controller
 
         // 🔥 Tambahkan ini
         $actor = Auth::guard('owner')->user();
-        dump($actor);
+        //dump($actor);
 
         ActivityLog::create([
             'actor_id' => $actor->id,

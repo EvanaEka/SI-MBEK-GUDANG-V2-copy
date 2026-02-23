@@ -395,6 +395,25 @@
                                     </a>
                                 </li>
 
+                                <li class="flex">
+    <a href="#"
+        class="text-base text-gray-900 font-normal rounded-lg flex items-center p-2 hover:bg-gray-100 group">
+        
+        <svg xmlns="http://www.w3.org/2000/svg"
+            class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75"
+            fill="currentColor"
+            viewBox="0 0 16 16">
+            <path d="M0 1.5A.5.5 0 0 1 .5 1h15a.5.5 0 0 1 0 1H.5A.5.5 0 0 1 0 1.5zM1 4h14v10H1V4zm1 1v8h12V5H2z"/>
+        </svg>
+
+        <x-responsive-nav-link 
+            :href="route('admin.purchase-orders.index')" 
+            :active="request()->routeIs('admin.purchase-orders.*')">
+            {{ __('Purchase Order') }}
+        </x-responsive-nav-link>
+    </a>
+</li>
+
                             </ul>
                             <div class="space-y-2 pt-2 ">
                                 <div class="pt-4 pb-1 border-t border-gray-200">

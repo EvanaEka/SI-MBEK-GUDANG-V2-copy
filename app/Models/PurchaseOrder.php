@@ -23,6 +23,8 @@ class PurchaseOrder extends Model
         'dicatat_oleh_id',
         'dicatat_oleh_type',
         'catatan_owner',
+        'tanggal_disetujui',
+        'tanggal_diterima',
     ];
 
     /**
@@ -39,7 +41,7 @@ class PurchaseOrder extends Model
      */
     public function dicatatOleh():MorphTo
     {
-          return $this->morphTo('dicatat_oleh');
+          return $this->morphTo(__FUNCTION__, 'dicatat_oleh_type', 'dicatat_oleh_id');
     }
 
     /**

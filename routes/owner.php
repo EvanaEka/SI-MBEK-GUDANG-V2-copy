@@ -63,6 +63,9 @@ Route::prefix('owner')->name('owner.')->group(function () {
                     Route::post('/', [PurchaseOrderController::class, 'store'])
                         ->name('store');
 
+                    Route::get('/{purchaseOrder}', [PurchaseOrderController::class, 'show'])
+                        ->name('show');
+
                     Route::patch('/{purchaseOrder}/approve', [PurchaseOrderController::class, 'approve'])
                         ->name('approve');
                 });
