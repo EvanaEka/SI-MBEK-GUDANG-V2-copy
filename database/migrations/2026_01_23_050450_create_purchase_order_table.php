@@ -32,6 +32,10 @@ return new class extends Migration {
             $table->morphs('dicatat_oleh');
 
             $table->text('catatan_owner')->nullable();
+
+            $table->date('tanggal_disetujui')->nullable();
+            $table->date('tanggal_diterima')->nullable();
+
             $table->timestamps();
         });
     }

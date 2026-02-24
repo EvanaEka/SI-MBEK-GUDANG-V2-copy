@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -15,6 +14,11 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('produk_id');
+
+            $table->unsignedBigInteger('orderable_id')->nullable();
+            $table->string('orderable_type')->nullable();
+            $table->index(['orderable_id', 'orderable_type']);
+
             $table->string('order_id')->unique();
             $table->string('snap_token')->nullable();
             $table->integer('gross_amount');
@@ -24,7 +28,7 @@ return new class extends Migration
             $table->integer('qty')->default(1);
             $table->enum('status', [
                 'pending',
-                'settlement', 
+                'settlement',
                 'capture',
                 'success',
                 'failed',

@@ -28,7 +28,7 @@ class Order extends Model
     ];
 
 
-     protected $casts = [
+    protected $casts = [
         'transfer_date' => 'date',
     ];
     public function user()
@@ -36,17 +36,7 @@ class Order extends Model
         return $this->belongsTo(\App\Models\User::class, 'user_id');
     }
 
-    public function kambing()
-    {
-        return $this->belongsTo(\App\Models\Kambing::class, 'produk_id');
-    }
-
-    public function domba()
-    {
-        return $this->belongsTo(\App\Models\Domba::class, 'produk_id');
-    }
-
-     public function produk()
+    public function produk()
     {
         $kambing = $this->kambing;
         if ($kambing) {
@@ -74,7 +64,12 @@ class Order extends Model
     public static function isProductPending($productId)
     {
         return self::where('produk_id', $productId)
-                   ->where('status', 'pending')
-                   ->exists();
+            ->where('status', 'pending')
+            ->exists();
+    }
+
+    public function orderable()
+    {
+        return $this->morphTo();
     }
 }

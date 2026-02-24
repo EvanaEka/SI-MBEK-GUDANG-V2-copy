@@ -12,8 +12,10 @@ use App\Http\Controllers\Admin\AdminManagementController;
 use App\Http\Controllers\Order\OrderController;
 use App\Http\Controllers\Admin\PenjualanController;
 use App\Http\Controllers\Admin\PurchaseOrderController;
+use App\Http\Controllers\Admin\MaterialInventoryController;
 use App\Http\Controllers\WarehouseDashboardController;
 use App\Http\Controllers\Admin\ProductionController;
+use App\Http\Controllers\Admin\ProductInventoryController;
 use App\Http\Controllers\Admin\ProductAllocationController;
 use App\Http\Controllers\Admin\ProductionQcController;
 use App\Http\Controllers\Admin\DisposalController;
@@ -81,6 +83,22 @@ Route::prefix('admin')->name('admin.')->group(function () {
                 });
 
 
+            //MaterialInventory
+            Route::resource(
+                'inventory/material',
+                MaterialInventoryController::class
+            )->only(['index', 'show']);
+
+            Route::post(
+                'inventory/material/{material}/adjust',
+                [MaterialInventoryController::class, 'adjust']
+            )->name('inventory.material.adjust');
+
+            Route::post(
+                'inventory/material/{material}/sync',
+                [MaterialInventoryController::class, 'sync']
+            )->name('inventory.material.sync');
+
             //Production
             Route::post('/productions', [ProductionController::class, 'store'])
                 ->name('productions.store');
@@ -109,6 +127,22 @@ Route::prefix('admin')->name('admin.')->group(function () {
                 '/productions/{production}/qc',
                 [ProductionQcController::class, 'store']
             )->name('qc.store');
+
+            //Product Inventory
+            Route::resource(
+                'inventory/product',
+                ProductInventoryController::class
+            )->only(['index', 'show']);
+
+            Route::post(
+                'inventory/product/{product}/sync',
+                [ProductInventoryController::class, 'sync']
+            )->name('inventory.product.sync');
+
+            Route::post(
+                'inventory/product/{product}/adjust',
+                [ProductInventoryController::class, 'adjust']
+            )->name('inventory.product.adjust');
 
             //Disposal
             Route::post('/disposal/material/{stock}', [DisposalController::class, 'disposeMaterial']);

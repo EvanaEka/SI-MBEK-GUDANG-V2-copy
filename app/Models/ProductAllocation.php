@@ -32,4 +32,10 @@ class ProductAllocation extends Model
     {
         return $this->belongsTo(Admin::class, 'created_by');
     }
+
+    public function stockMovements()
+    {
+        return $this->morphMany(StockMovement::class, 'stockable');
+    }
+
 }

@@ -35,8 +35,7 @@ class MaterialStockFactory extends Factory
             'price_per_unit' => $this->faker->optional()->randomFloat(2, 1000, 10000),
 
             // Wajib sesuai migration
-            'created_by' => Admin::query()->inRandomOrder()->value('id')
-                ?? Admin::factory(),
+            'created_by' => Admin::factory(),
 
         ];
     }
@@ -46,7 +45,7 @@ class MaterialStockFactory extends Factory
      */
     public function expired(): static
     {
-        return $this->state(fn () => [
+        return $this->state(fn() => [
             'expired_date' => now()->subDays(5)->format('Y-m-d'),
         ]);
     }
@@ -56,7 +55,7 @@ class MaterialStockFactory extends Factory
      */
     public function noExpired(): static
     {
-        return $this->state(fn () => [
+        return $this->state(fn() => [
             'expired_date' => null,
         ]);
     }
@@ -66,7 +65,7 @@ class MaterialStockFactory extends Factory
      */
     public function lowStock(): static
     {
-        return $this->state(fn () => [
+        return $this->state(fn() => [
             'qty' => 5,
         ]);
     }

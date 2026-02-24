@@ -19,7 +19,7 @@ class MaterialFactory extends Factory
             'nama_bahan' => $this->faker->words(2, true),
             'kategori' => $this->faker->randomElement(['Pakan', 'Obat']),
             'satuan' => $this->faker->randomElement(['kg', 'liter', 'pcs']),
-            'stok' => $this->faker->numberBetween(0, 200),
+            'stok' => 0,
 
             'pemakaian_rata_rata' => $pemakaian,
             'lead_time' => $leadTime,

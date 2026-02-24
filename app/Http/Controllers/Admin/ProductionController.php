@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Formula;
+use App\Models\Material;
 use App\Models\MaterialStock;
+use App\Models\StockMovement;
 use App\Models\Production;
 use App\Models\Product;
+use App\Models\ProductStock;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +22,7 @@ class ProductionController extends Controller
      * - cek stok bahan baku
      * - kurangi stok bahan baku
      */
-    public function store(Request $request, Production $production )
+    public function store(Request $request)
     {
         $request->validate([
             'formula_id' => 'required|exists:formulas,id',
@@ -54,6 +57,16 @@ class ProductionController extends Controller
                     );
                 }
             }
+
+            // 🏭 SIMPAN DATA PRODUKSI
+            $production = Production::create([
+                'formula_id' => $formula->id,
+                'product_id' => $product->id,
+                'qty_produksi' => $request->qty_produksi,
+                'production_date' => now(),
+                'status' => 'diproses',
+                'created_by' => auth('admin')->id(),
+            ]);
 
             // 📉 KURANGI STOK BAHAN BAKU (FIFO)
             foreach ($formula->materials as $material) {
@@ -99,19 +112,19 @@ class ProductionController extends Controller
                 }
 
                 // Tetap kurangi stok summary
-                $material->decrement('stok', $kebutuhan);
+                $material->stok = $material->materialStocks()->sum('qty');
+                $material->save();
+
+                StockMovement::create([
+                    'stockable_id' => $material->id,
+                    'stockable_type' => Material::class,
+                    'type' => 'out',
+                    'quantity' => $kebutuhan,
+                    'source' => 'production',
+                    'reference_id' => $production->id,
+                    'movement_date' => now(),
+                ]);
             }
-
-
-            // 🏭 SIMPAN DATA PRODUKSI
-            Production::create([
-                'formula_id' => $formula->id,
-                'product_id' => $product->id,
-                'qty_produksi' => $request->qty_produksi,
-                'production_date' => now(),
-                'status' => 'diproses',
-                'created_by' => auth('admin')->id(),
-            ]);
 
             $actor = $this->getCurrentActor();
 
@@ -253,14 +266,40 @@ class ProductionController extends Controller
         DB::beginTransaction();
 
         try {
+
+            // 1️⃣ Tambah stok summary
             $production->product->increment(
                 'stok',
                 $production->qty_produksi
             );
 
+            // 2️⃣ INSERT KE PRODUCT_STOCKS (BATCH)
+            ProductStock::create([
+                'product_id' => $production->product_id,
+                'qty' => $production->qty_produksi,
+                'source' => 'production',
+                'reference_id' => $production->id,
+                'received_date' => $production->production_date ?? now(),
+                'expired_date' => $production->expired_date,
+            ]);
+
+            // 3️⃣ Stock movement log
+            StockMovement::create([
+                'stockable_id' => $production->product->id,
+                'stockable_type' => Product::class,
+                'type' => 'in',
+                'quantity' => $production->qty_produksi,
+                'source' => 'production',
+                'reference_id' => $production->id,
+                'movement_date' => now(),
+            ]);
+
+            // 4️⃣ Update status produksi
             $production->update([
                 'status' => 'selesai',
             ]);
+
+            DB::commit();
 
             $actor = $this->getCurrentActor();
 

@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Material;
+use App\Models\Product;
 use App\Models\MaterialStock;
 use App\Models\Supplier;
 use App\Models\Owner;
 use App\Models\ActivityLog;
+use App\Models\StockMovement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -48,13 +50,18 @@ class PurchaseOrderController extends Controller
     {
         $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
+            'type' => 'required|in:material,product',
             'tanggal_pesan' => 'required|date',
-            'items' => 'required|array',
-            'items.*.material_id' => 'required|exists:materials,id',
-            'items.*.jumlah' => 'required|integer|min:1',
-            'items.*.harga_satuan' => 'required|numeric|min:0',
-        ]);
 
+            'items' => 'required|array|min:1',
+
+            'items.*.material_id' => 'nullable|required_if:type,material|prohibited_if:type,product|exists:materials,id',
+            'items.*.product_id' => 'nullable|required_if:type,product|prohibited_if:type,material|exists:products,id',
+
+            'items.*.jumlah' => 'required|integer|min:1',
+            'items.*.harga_satuan' => 'nullable|numeric|min:0',
+            'items.*.subtotal' => 'nullable|numeric|min:0',
+        ]);
         $po = DB::transaction(function () use ($request) {
 
             if (Auth::guard('admin')->check()) {
@@ -83,7 +90,7 @@ class PurchaseOrderController extends Controller
                 'kode_po' => $kode_po,
                 'supplier_id' => $request->supplier_id,
                 'type' => $request->type,
-                'asal' => $request->asal,
+                'source' => $request->source,
                 'tanggal_pesan' => $request->tanggal_pesan,
                 'status' => 'draft',
                 'dipesan_oleh_id' => $pemesan->id,
@@ -96,7 +103,8 @@ class PurchaseOrderController extends Controller
             foreach ($request->items as $item) {
                 PurchaseOrderItem::create([
                     'purchase_order_id' => $po->id,
-                    'material_id' => $item['material_id'],
+                    'material_id' => $po->type === 'material' ? $item['material_id'] : null,
+                    'product_id' => $po->type === 'product' ? $item['product_id'] : null,
                     'jumlah' => $item['jumlah'],
                     'harga_satuan' => $item['harga_satuan'],
                     'subtotal' => $item['jumlah'] * $item['harga_satuan'],
@@ -258,12 +266,23 @@ class PurchaseOrderController extends Controller
                         'created_by' => auth('admin')->id(),
                     ]);
 
-                    $material->increment('stok', $jumlahDiterima);
+                    $material->stok = $material->materialStocks()->sum('qty');
+                    $material->save();
+
+                    StockMovement::create([
+                        'stockable_id' => $material->id,
+                        'stockable_type' => Material::class,
+                        'type' => 'in',
+                        'quantity' => $jumlahDiterima,
+                        'source' => 'PO',
+                        'reference_id' => $purchaseOrder->id,
+                        'movement_date' => now(),
+                    ]);
                 }
 
                 /*
                 |--------------------------------------------------------------------------
-                | PO TYPE: PRODUCT (HANYA OBAT & ASAL PEMBELIAN)
+                | PO TYPE: PRODUCT (HANYA OBAT & SOURCE PEMBELIAN)
                 |--------------------------------------------------------------------------
                 */ elseif ($purchaseOrder->type === 'product') {
 
@@ -277,11 +296,21 @@ class PurchaseOrderController extends Controller
                         throw new \Exception('Hanya produk obat yang boleh via PO.');
                     }
 
-                    if ($product->asal !== 'pembelian') {
+                    if ($product->source !== 'pembelian') {
                         throw new \Exception('Produk ini bukan dari pembelian.');
                     }
 
                     $product->increment('stok', $jumlahDiterima);
+
+                    StockMovement::create([
+                        'stockable_id' => $product->id,
+                        'stockable_type' => Product::class,
+                        'type' => 'in',
+                        'quantity' => $jumlahDiterima,
+                        'source' => 'PO',
+                        'reference_id' => $purchaseOrder->id,
+                        'movement_date' => now(),
+                    ]);
                 }
             }
 

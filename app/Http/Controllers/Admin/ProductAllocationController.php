@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\ProductStock;
 use App\Models\ProductAllocation;
 use App\Models\ActivityLog;
+use App\Models\StockMovement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -36,7 +38,7 @@ class ProductAllocationController extends Controller
                 ]);
             }
 
-            ProductAllocation::updateOrCreate(
+            $allocation = ProductAllocation::updateOrCreate(
                 [
                     'product_id' => $product->id,
                     'type' => $request->type,
@@ -46,8 +48,6 @@ class ProductAllocationController extends Controller
                     'created_by' => auth('admin')->id(),
                 ]
             );
-
-            $allocation = ProductAllocation::create($validated);
 
             $actor = $this->getCurrentActor();
             if ($actor) {
@@ -102,8 +102,51 @@ class ProductAllocationController extends Controller
                     throw new \Exception('Stok produk tidak mencukupi');
                 }
 
+                $remainingQty = $request->qty;
+
+                /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Models\ProductStock> $batches */
+                $batches = ProductStock::where('product_id', $product->id)
+                    ->where('qty', '>', 0)
+                    ->where(function ($q) {
+                        $q->whereNull('expired_date')
+                            ->orWhere('expired_date', '>=', now());
+                    })
+                    ->orderBy('received_date', 'asc') // FIFO
+                    ->lockForUpdate()
+                    ->get();
+
+                foreach ($batches as $batch) {
+
+                    if ($remainingQty <= 0)
+                        break;
+
+                    if ($batch->qty >= $remainingQty) {
+                        $batch->decrement('qty', $remainingQty);
+                        $remainingQty = 0;
+                    } else {
+                        $remainingQty -= $batch->qty;
+                        $batch->update(['qty' => 0]);
+                    }
+                }
+
+                if ($remainingQty > 0) {
+                    throw new \Exception('Batch produk tidak mencukupi');
+                }
+
                 $product->decrement('stok', $request->qty);
                 $allocation->decrement('qty', $request->qty);
+
+                $allocation->decrement('qty', $request->qty);
+
+                StockMovement::create([
+                    'stockable_id' => $product->id,
+                    'stockable_type' => Product::class,
+                    'type' => 'out',
+                    'quantity' => $request->qty,
+                    'source' => 'pemakaian_internal',
+                    'reference_id' => null,
+                    'movement_date' => now(),
+                ]);
             });
 
             // 🔔 ROP CHECK
@@ -159,6 +202,16 @@ class ProductAllocationController extends Controller
 
                 $product->decrement('stok', $request->qty);
                 $allocation->decrement('qty', $request->qty);
+
+                StockMovement::create([
+                    'stockable_id' => $product->id,
+                    'stockable_type' => Product::class,
+                    'type' => 'out',
+                    'quantity' => $request->qty,
+                    'source' => 'jual',
+                    'reference_id' => null,
+                    'movement_date' => now(),
+                ]);
             });
 
             // 🔔 ROP CHECK

@@ -15,7 +15,7 @@ class Product extends Model
         'stok',
         'formula_id',
         'type',
-        'asal',
+        'source',
         'created_by',
     ];
 
@@ -53,5 +53,15 @@ class Product extends Model
     public function isBelowRop(): bool
     {
         return $this->stok <= $this->rop;
+    }
+
+    public function stockMovements()
+    {
+        return $this->morphMany(StockMovement::class, 'stockable');
+    }
+
+    public function stocks()
+    {
+        return $this->hasMany(ProductStock::class);
     }
 }

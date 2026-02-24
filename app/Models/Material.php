@@ -100,6 +100,9 @@ class Material extends Model
         return $this->hasMany(MaterialStock::class);
     }
 
-
+    public function stockMovements()
+    {
+        return $this->morphMany(StockMovement::class, 'stockable');
+    }
 
 }

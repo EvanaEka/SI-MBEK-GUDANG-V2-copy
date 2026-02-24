@@ -9,6 +9,8 @@ use App\Http\Controllers\Owner\KambingController;
 use App\Http\Controllers\Owner\DombaController;
 use App\Http\Controllers\Owner\PenjualanController;
 use App\Http\Controllers\Owner\PurchaseOrderController;
+use App\Http\Controllers\Owner\MaterialInventoryController;
+use App\Http\Controllers\Owner\ProductInventoryController;
 use App\Http\Controllers\WarehouseDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -70,13 +72,24 @@ Route::prefix('owner')->name('owner.')->group(function () {
                         ->name('approve');
                 });
 
+            //MaterialInventory
+            Route::resource(
+                'inventory/material',
+                MaterialInventoryController::class
+            )->only(['index', 'show']);
+
+            Route::resource(
+                'inventory/product',
+                ProductInventoryController::class
+            )->only(['index', 'show']);
+
             //Warehouse
             Route::get('/warehouse', [WarehouseDashboardController::class, 'index'])->name('warehouse.dashboard');
 
-            // Dashboard (Read-only)
+            // (Read-only)
             Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-           // Profile Management
+            // Profile Management
             Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
             Route::patch('profile', [ProfileController::class, 'update'])->name('profile.update');
             Route::delete('profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -92,7 +105,7 @@ Route::prefix('owner')->name('owner.')->group(function () {
             Route::get('domba/{domba}', [DombaController::class, 'show'])->name('domba.show');
             Route::get('domba/{id}/monitoring', [DombaController::class, 'monitoring'])->name('domba.monitoring');
 
-             // Penitip 
+            // Penitip 
             Route::get('penitip/{type?}', [ProfileController::class, 'penitip'])
                 ->where('type', 'kambing|domba')
                 ->name('penitip');
@@ -101,12 +114,12 @@ Route::prefix('owner')->name('owner.')->group(function () {
             Route::get('perjanjian', [DashboardController::class, 'perjanjian'])
                 ->name('perjanjian');
 
-             // Perjanjian & Penjualan
+            // Perjanjian & Penjualan
             Route::get('perjanjian', [DashboardController::class, 'perjanjian'])->name('perjanjian');
             Route::get('penjualan', [DashboardController::class, 'penjualan'])->name('penjualan');
             Route::get('penjualan/invoice/{order_id}', [PenjualanController::class, 'invoice'])->name('penjualan.invoice');
             Route::get('penjualan/manual-invoice/{order_id}', [PenjualanController::class, 'manualInvoice'])->name('penjualan.manual-invoice');
-            
+
             // Reports (Read-only)
             Route::get('reports/kambing', [DashboardController::class, 'kambingReport'])->name('reports.kambing');
             Route::get('reports/domba', [DashboardController::class, 'dombaReport'])->name('reports.domba');

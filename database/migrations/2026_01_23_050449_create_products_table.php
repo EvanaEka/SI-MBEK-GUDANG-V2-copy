@@ -29,8 +29,8 @@ return new class extends Migration {
             //Tipe Produk
             $table->enum('type', ['pakan', 'obat']);
 
-            //Asal sumber produk
-            $table->enum('asal', ['produksi', 'pembelian']);
+            //Sumber produk
+            $table->enum('source', ['produksi', 'pembelian']);
 
             // siapa admin yg buat data produk
             $table->foreignId('created_by')

@@ -74,7 +74,7 @@ class ProductionQcController extends Controller
             $percentage = round($percentage, 2);
 
             // ✅ Simpan log QC (tambahkan score_non_kritis agar tidak error DB)
-            ProductionQc::create([
+            $qc = ProductionQc::create([
                 'production_id' => $production->id,
                 'created_by' => auth('admin')->id(),
                 'status' => $status,
@@ -90,8 +90,6 @@ class ProductionQcController extends Controller
                 'qc_percentage' => $percentage,
                 'qc_threshold' => $threshold,
             ]);
-
-            $qc = ProductionQc::create($validated);
 
             $actor = $this->getCurrentActor();
             if ($actor) {

@@ -16,6 +16,7 @@ class PurchaseOrder extends Model
     protected $fillable = [
         'kode_po',
         'supplier_id',
+        'type',
         'tanggal_pesan',
         'status',
         'dipesan_oleh_id',

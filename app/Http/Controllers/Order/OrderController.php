@@ -6,9 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Kambing;
 use App\Models\Domba;
 use App\Models\Order;
+use App\Models\Product;
 use App\Models\ActivityLog;
+use App\Models\StockMovement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 // Tambahkan import Midtrans
@@ -35,10 +38,11 @@ class OrderController extends Controller
      */
     public function index()
     {
-        $kambings = Kambing::where('for_Sale', 'yes')->get();
-        return view('order', [
-            'kambings' => $kambings,
-        ]);
+        $kambings = Kambing::where('for_sale', 'yes')->get();
+        $dombas = Domba::where('for_sale', 'yes')->get();
+        $products = Product::where('stok', '>', 0)->get();
+
+        return view('order', compact('kambings', 'dombas', 'products'));
     }
 
     /**
@@ -47,12 +51,12 @@ class OrderController extends Controller
     public function show($category, $id)
     {
         if ($category === 'kambing') {
-            $produk = Kambing::findOrFail($id);
+            $item = Kambing::findOrFail($id);
         } else {
-            $produk = Domba::findOrFail($id);
+            $item = Domba::findOrFail($id);
         }
 
-        return view('order', compact('produk', 'category'));
+        return view('order', compact('item', 'category'));
     }
 
     /**
@@ -71,18 +75,26 @@ class OrderController extends Controller
             'phone' => 'required|string',
         ]);
 
-        // 2. Ambil objek produk: bisa Kambing atau Domba
-        $produk = null;
-        if ($request->category === 'kambing') {
-            $produk = Kambing::find($request->produk_id);
-        } else {
-            $produk = Domba::find($request->produk_id);
+        // 2. Ambil item berdasarkan category
+        switch ($request->category) {
+            case 'kambing':
+                $item = Kambing::find($request->produk_id);
+                break;
+
+            case 'domba':
+                $item = Domba::find($request->produk_id);
+                break;
+
+            case 'product':
+                $item = Product::find($request->produk_id);
+                break;
+
+            default:
+                $item = null;
         }
 
-        if (!$produk) {
-            return response()->json([
-                'error' => 'Produk tidak ditemukan'
-            ], 404);
+        if (!$item) {
+            return response()->json(['error' => 'Item tidak ditemukan'], 404);
         }
 
         // 3. Generate order_id unik
@@ -91,16 +103,16 @@ class OrderController extends Controller
         // 4. Susun item_details dan transaction_details sesuai Midtrans
         $itemDetails = [
             [
-                'id' => $produk->id,
-                'price' => (int) $produk->harga,
+                'id' => $item->id,
+                'price' => (int) $item->harga,
                 'quantity' => 1,
-                'name' => ucfirst($request->category ?? 'Produk') . ' - ' . ($produk->name ?? 'Unnamed'),
+                'name' => ucfirst($request->category ?? 'Produk') . ' - ' . ($item->name ?? 'Unnamed'),
             ]
         ];
 
         $transactionDetails = [
             'order_id' => $orderId,
-            'gross_amount' => (int) $produk->harga,
+            'gross_amount' => (int) $item->harga,
         ];
 
         $customerDetails = [
@@ -138,10 +150,11 @@ class OrderController extends Controller
             // 6. Simpan ke tabel orders
             $order = Order::create([
                 'user_id' => Auth::id(),
-                'produk_id' => $produk->id,
+                'orderable_id' => $item->id,
+                'orderable_type' => get_class($item),
                 'order_id' => $orderId,
                 'snap_token' => $snapToken,
-                'gross_amount' => $produk->harga,
+                'gross_amount' => $item->harga,
                 'status' => 'pending',
                 'payment_method' => 'midtrans',
                 'name' => $request->name,
@@ -156,8 +169,8 @@ class OrderController extends Controller
                 'type' => 'order_create',
                 'module' => 'order',
                 'description' => 'Membuat order Midtrans. Order ID: ' . $order->order_id .
-                    ', Produk ID: ' . $produk->id .
-                    ', Total: ' . $produk->harga,
+                    ', Produk ID: ' . $item->id .
+                    ', Total: ' . $item->harga,
             ]);
 
 
@@ -174,7 +187,7 @@ class OrderController extends Controller
 
     public function invoice($order_id)
     {
-        $order = Order::where('order_id', $order_id)->with(['user', 'kambing', 'domba'])->firstOrFail();
+        $order = Order::where('order_id', $order_id)->with(['user', 'orderable'])->firstOrFail();
 
         // Pastikan hanya user terkait yang bisa akses invoice-nya
         if (auth()->id() !== $order->user_id && !auth()->user()->is_superadmin) {
@@ -188,7 +201,6 @@ class OrderController extends Controller
     {
         $notif = $request->all();
 
-        // Ambil order_id dari notifikasi
         $orderId = $notif['order_id'] ?? null;
         $transactionStatus = $notif['transaction_status'] ?? null;
 
@@ -196,63 +208,121 @@ class OrderController extends Controller
             return response()->json(['message' => 'Order ID not found'], 400);
         }
 
-        // Cari order di database
-        $order = Order::where('order_id', $orderId)->first();
+        $order = Order::with('orderable')
+            ->where('order_id', $orderId)
+            ->first();
+
         if (!$order) {
             return response()->json(['message' => 'Order not found'], 404);
         }
 
-        // Update status order sesuai status dari Midtrans
+        $oldStatus = $order->status;
+
+        // Mapping status Midtrans → sistem
         switch ($transactionStatus) {
             case 'capture':
             case 'settlement':
-                $order->status = 'success';
+                $newStatus = 'success';
                 break;
             case 'pending':
-                $order->status = 'pending';
+                $newStatus = 'pending';
                 break;
             case 'deny':
             case 'expire':
             case 'cancel':
-                $order->status = 'failed';
+                $newStatus = 'failed';
                 break;
             default:
-                $order->status = $transactionStatus;
+                $newStatus = $transactionStatus;
         }
 
+        $order->status = $newStatus;
         $order->save();
 
         ActivityLog::create([
-            'actor_id' => $order->user_id, // atau null kalau mau tandai system
+            'actor_id' => $order->user_id,
             'actor_type' => \App\Models\User::class,
             'type' => 'order_update',
             'module' => 'order',
-            'description' => 'Webhook update status. Order ID: ' . $order->order_id .
-                ', Status: ' . $order->status,
+            'description' => 'Webhook update. Order ID: '
+                . $order->order_id . ', Status: ' . $order->status,
         ]);
 
+        $item = $order->orderable;
 
-
-        // Ambil produk terkait
-        $produk = Kambing::find($order->produk_id) ?: Domba::find($order->produk_id);
-
-        if ($produk) {
-            if (in_array($transactionStatus, ['settlement', 'capture'])) {
-                // Pembayaran sukses: produk hilang dari etalase
-                $produk->update(['for_sale' => 'no', 'is_locked' => false]);
-            } elseif (in_array($transactionStatus, ['expire', 'cancel', 'deny', 'failure'])) {
-                // Pembayaran gagal: produk muncul lagi di etalase
-                $produk->update(['is_locked' => false, 'for_sale' => 'yes']);
-            }
+        if (!$item) {
+            return response()->json(['message' => 'Item not found'], 404);
         }
 
-        return response()->json(['message' => 'Order status updated', 'order' => $order], 200);
+        // ==================================
+        // STOCK PROTECTION (RETRY SAFE)
+        // ==================================
+
+        DB::transaction(function () use ($order, $item, $newStatus, $oldStatus) {
+
+            if ($newStatus === 'success' && $oldStatus !== 'success') {
+
+                if ($item instanceof Product) {
+
+                    if ($item->stok >= $order->qty) {
+                        $item->decrement('stok', $order->qty);
+
+                        StockMovement::create([
+                            'stockable_id' => $item->id,
+                            'stockable_type' => get_class($item),
+                            'type' => 'out',
+                            'quantity' => $order->qty,
+                            'source' => 'Sale',
+                            'reference_id' => $order->id,
+                            'movement_date' => now(),
+                        ]);
+                    }
+                }
+
+                if ($item instanceof Kambing || $item instanceof Domba) {
+                    $item->update([
+                        'for_sale' => 'no',
+                        'is_locked' => false
+                    ]);
+                }
+            }
+
+            if ($newStatus === 'failed' && $oldStatus === 'success') {
+
+                if ($item instanceof Product) {
+
+                    $item->increment('stok', $order->qty);
+
+                    StockMovement::create([
+                        'stockable_id' => $item->id,
+                        'stockable_type' => get_class($item),
+                        'type' => 'in',
+                        'quantity' => $order->qty,
+                        'source' => 'Payment Failed',
+                        'reference_id' => $order->id,
+                        'movement_date' => now(),
+                    ]);
+                }
+
+                if ($item instanceof Kambing || $item instanceof Domba) {
+                    $item->update([
+                        'for_sale' => 'yes',
+                        'is_locked' => false
+                    ]);
+                }
+            }
+        });
+
+        return response()->json([
+            'message' => 'Order status updated',
+            'order' => $order
+        ], 200);
     }
 
     public function transaksi()
     {
         $orders = Order::where('user_id', auth()->id())
-            ->with(['kambing', 'domba'])
+            ->with(['orderable'])
             ->latest()
             ->get();
         return view('order.transaksi', compact('orders'));
@@ -260,9 +330,9 @@ class OrderController extends Controller
 
     public function manualTransfer(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'produk_id' => 'required|integer',
-            'category' => 'required|in:kambing,domba',
+            'category' => 'required|in:kambing,domba,product',
             'email' => 'required|email',
             'name' => 'required|string|max:255',
             'address' => 'required|string',
@@ -275,9 +345,17 @@ class OrderController extends Controller
         ]);
 
         // Cari produk
-        $produk = ($request->category === 'kambing')
-            ? Kambing::findOrFail($request->produk_id)
-            : Domba::findOrFail($request->produk_id);
+        switch ($request->category) {
+            case 'kambing':
+                $produk = Kambing::findOrFail($request->produk_id);
+                break;
+            case 'domba':
+                $produk = Domba::findOrFail($request->produk_id);
+                break;
+            case 'product':
+                $produk = Product::findOrFail($request->produk_id);
+                break;
+        }
 
         // Generate order ID
         $orderId = 'ORD-' . time() . '-' . Auth::id();
@@ -289,7 +367,8 @@ class OrderController extends Controller
             // Buat order
             $order = Order::create([
                 'user_id' => Auth::id(),
-                'produk_id' => $produk->id,
+                'orderable_id' => $produk->id,
+                'orderable_type' => get_class($produk),
                 'order_id' => $orderId,
                 'snap_token' => null,
                 'gross_amount' => $request->transfer_amount,
@@ -337,7 +416,7 @@ class OrderController extends Controller
     {
         $order = Order::where('order_id', $order_id)
             ->where('payment_method', 'manual')
-            ->with(['user', 'kambing', 'domba'])
+            ->with(['user', 'orderable'])
             ->firstOrFail();
 
         // Pastikan hanya user terkait yang bisa akses
@@ -351,18 +430,24 @@ class OrderController extends Controller
     public function updateOrderStatus(Request $request, $orderId)
     {
         try {
-            $order = Order::with('kambing', 'domba')->findOrFail($orderId);
+            $order = Order::with('orderable')->findOrFail($orderId);
+            $item = $order->orderable;
+
+            $oldStatus = $order->status;
 
             $status = $request->input('status');
             $notes = $request->input('notes');
 
             if (!in_array($status, ['settlement', 'cancel'])) {
-                return response()->json(['success' => false, 'message' => 'Status tidak valid'], 400);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Status tidak valid'
+                ], 400);
             }
 
-            // Update order
+            // Update order dulu
             $order->status = $status;
-            $order->admin_notes = $notes; // Simpan notes
+            $order->admin_notes = $notes;
             $order->save();
 
             ActivityLog::create([
@@ -370,35 +455,77 @@ class OrderController extends Controller
                 'actor_type' => \App\Models\User::class,
                 'type' => 'order_update',
                 'module' => 'order',
-                'description' => 'Webhook update status. Order ID: ' . $order->order_id .
-                    ', Status: ' . $order->status,
+                'description' => 'Admin update status. Order ID: '
+                    . $order->order_id . ', Status: ' . $order->status,
             ]);
 
+            // ===============================
+            // HANDLE STOCK LOGIC
+            // ===============================
 
+            DB::transaction(function () use ($order, $item, $status, $oldStatus) {
 
+                if ($status === 'settlement' && $oldStatus !== 'settlement') {
 
-            // Update produk status
-            if ($status === 'settlement') {
-                if ($order->kambing) {
-                    $order->kambing->update(['for_sale' => 'no', 'is_locked' => false]);
+                    if ($item instanceof Product) {
+
+                        if ($item->stok >= $order->qty) {
+                            $item->decrement('stok', $order->qty);
+
+                            StockMovement::create([
+                                'stockable_id' => $item->id,
+                                'stockable_type' => get_class($item),
+                                'type' => 'out',
+                                'quantity' => $order->qty,
+                                'source' => 'Sale',
+                                'reference_id' => $order->id,
+                                'movement_date' => now(),
+                            ]);
+                        }
+                    }
+
+                    if ($item instanceof Kambing || $item instanceof Domba) {
+                        $item->update([
+                            'for_sale' => 'no',
+                            'is_locked' => false
+                        ]);
+                    }
                 }
-                if ($order->domba) {
-                    $order->domba->update(['for_sale' => 'no', 'is_locked' => false]);
+
+                if ($status === 'cancel' && $oldStatus === 'settlement') {
+
+                    if ($item instanceof Product) {
+
+                        $item->increment('stok', $order->qty);
+
+                        StockMovement::create([
+                            'stockable_id' => $item->id,
+                            'stockable_type' => get_class($item),
+                            'type' => 'in',
+                            'quantity' => $order->qty,
+                            'source' => 'Order Cancel',
+                            'reference_id' => $order->id,
+                            'movement_date' => now(),
+                        ]);
+                    }
+
+                    if ($item instanceof Kambing || $item instanceof Domba) {
+                        $item->update([
+                            'for_sale' => 'yes',
+                            'is_locked' => false
+                        ]);
+                    }
                 }
-            } elseif ($status === 'cancel') {
-                if ($order->kambing) {
-                    $order->kambing->update(['for_sale' => 'yes', 'is_locked' => false]);
-                }
-                if ($order->domba) {
-                    $order->domba->update(['for_sale' => 'yes', 'is_locked' => false]);
-                }
-            }
+            });
 
             return response()->json(['success' => true]);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
 
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function updateOrderNotes(Request $request, $orderId)

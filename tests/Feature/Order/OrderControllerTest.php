@@ -6,7 +6,9 @@ use Tests\TestCase;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\Kambing;
-use App\Models\Domba; 
+use App\Models\Domba;
+use App\Models\Product;
+use App\Models\StockMovement;
 use App\Models\SiteSetting;
 use App\Models\SuperAdmin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -36,13 +38,13 @@ class OrderControllerTest extends TestCase
 
         // Create regular user first 
         $this->user = User::factory()->create();
-        
+
         // Create test products with user_id from regular user
         $this->kambing = Kambing::create([
             'user_id' => $this->user->id, // Use regular user ID instead of admin
             'name' => 'Test Kambing',
             'type_goat' => 'Etawa',
-            'gender' => 'Jantan', 
+            'gender' => 'Jantan',
             'age' => '12',
             'age_now' => '14',
             'weight' => '30',
@@ -64,29 +66,29 @@ class OrderControllerTest extends TestCase
         ]);
     }
 
-public function test_show_displays_product_details() 
-{
-    $response = $this->actingAs($this->user)
-        ->get("/order/kambing/{$this->kambing->id}");
+    public function test_show_displays_product_details()
+    {
+        $response = $this->actingAs($this->user)
+            ->get("/order/kambing/{$this->kambing->id}");
 
-    // If the route or view does not exist, expect 404, otherwise check for 200 and view data
-    if ($response->status() === 404) {
-        $response->assertStatus(404);
-    } else {
-        $response->assertStatus(200)
+        // If the route or view does not exist, expect 404, otherwise check for 200 and view data
+        if ($response->status() === 404) {
+            $response->assertStatus(404);
+        } else {
+            $response->assertStatus(200)
                 ->assertViewHas(['produk', 'category']);
+        }
     }
-}
 
-public function test_manual_transfer_validates_request()
-{
-    $response = $this->actingAs($this->user)
-        ->postJson('/order/manual-transfer', []);
+    public function test_manual_transfer_validates_request()
+    {
+        $response = $this->actingAs($this->user)
+            ->postJson('/order/manual-transfer', []);
 
-    // Jika endpoint tidak ada, status akan 404, jadi cek 404 saja:
-    $response->assertStatus(404);
-    // Atau skip test ini jika memang endpoint tidak ada
-}
+        // Jika endpoint tidak ada, status akan 404, jadi cek 404 saja:
+        $response->assertStatus(404);
+        // Atau skip test ini jika memang endpoint tidak ada
+    }
 
     public function test_cancel_order_updates_product_status()
     {
@@ -148,7 +150,7 @@ public function test_manual_transfer_validates_request()
         $order = Order::create([
             'user_id' => $this->user->id,
             'produk_id' => $this->kambing->id,
-            'order_id' => 'TEST-'.time(),
+            'order_id' => 'TEST-' . time(),
             'gross_amount' => 2000000,
             'status' => 'pending',
             'payment_method' => 'midtrans',
@@ -166,7 +168,7 @@ public function test_manual_transfer_validates_request()
         $response = $this->postJson('/midtrans/webhook', $webhookData);
 
         $response->assertStatus(200)
-                ->assertJson(['message' => 'Order status updated']);
+            ->assertJson(['message' => 'Order status updated']);
 
         $this->assertDatabaseHas('orders', [
             'id' => $order->id,
@@ -184,7 +186,7 @@ public function test_manual_transfer_validates_request()
         $order = Order::create([
             'user_id' => $this->user->id,
             'produk_id' => $this->kambing->id,
-            'order_id' => 'TEST-'.time(),
+            'order_id' => 'TEST-' . time(),
             'gross_amount' => 2000000,
             'status' => 'pending',
             'payment_method' => 'manual',
@@ -197,14 +199,14 @@ public function test_manual_transfer_validates_request()
         // Test owner can access
         $response = $this->actingAs($this->user)
             ->get("/order/manual-invoice/{$order->order_id}");
-        
+
         $response->assertStatus(200);
 
         // Test other user cannot access
         $otherUser = User::factory()->create();
         $response = $this->actingAs($otherUser)
             ->get("/order/manual-invoice/{$order->order_id}");
-        
+
         $response->assertStatus(403);
     }
 
@@ -218,7 +220,7 @@ public function test_manual_transfer_validates_request()
         $order = Order::create([
             'user_id' => $this->user->id,
             'produk_id' => $this->kambing->id,
-            'order_id' => 'TEST-'.time(),
+            'order_id' => 'TEST-' . time(),
             'gross_amount' => 2000000,
             'status' => 'pending',
             'payment_method' => 'manual',
@@ -243,5 +245,256 @@ public function test_manual_transfer_validates_request()
     public function test_update_order_notes()
     {
         $this->markTestSkipped('Guard superadmin tidak tersedia.');
+    }
+
+    public function test_webhook_settlement_decrements_stock_once()
+    {
+        $product = Product::create([
+            'user_id' => $this->user->id,
+            'name' => 'Test Product',
+            'stok' => 10,
+            'harga' => 100000
+        ]);
+
+        $order = Order::create([
+            'user_id' => $this->user->id,
+            'orderable_id' => $product->id,
+            'orderable_type' => Product::class,
+            'order_id' => 'TEST-' . time(),
+            'gross_amount' => 100000,
+            'status' => 'pending',
+            'payment_method' => 'midtrans',
+            'qty' => 2
+        ]);
+
+        $this->postJson('/midtrans/webhook', [
+            'order_id' => $order->order_id,
+            'transaction_status' => 'settlement'
+        ]);
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'success'
+        ]);
+
+        $this->assertDatabaseHas('products', [
+            'id' => $product->id,
+            'stok' => 8
+        ]);
+
+        $this->assertDatabaseHas('stock_movements', [
+            'reference_id' => $order->id,
+            'type' => 'out'
+        ]);
+    }
+
+    public function test_webhook_retry_does_not_double_decrement()
+    {
+        $product = Product::create([
+            'user_id' => $this->user->id,
+            'name' => 'Test Product',
+            'stok' => 10,
+            'harga' => 100000
+        ]);
+
+        $order = Order::create([
+            'user_id' => $this->user->id,
+            'orderable_id' => $product->id,
+            'orderable_type' => Product::class,
+            'order_id' => 'TEST-' . time(),
+            'gross_amount' => 100000,
+            'status' => 'pending',
+            'payment_method' => 'midtrans',
+            'qty' => 2
+        ]);
+
+        // First webhook
+        $this->postJson('/midtrans/webhook', [
+            'order_id' => $order->order_id,
+            'transaction_status' => 'settlement'
+        ]);
+
+        // Retry webhook
+        $this->postJson('/midtrans/webhook', [
+            'order_id' => $order->order_id,
+            'transaction_status' => 'settlement'
+        ]);
+
+        $product->refresh();
+
+        $this->assertEquals(8, $product->stok);
+
+        $this->assertEquals(
+            1,
+            StockMovement::where('reference_id', $order->id)
+                ->where('type', 'out')
+                ->count()
+        );
+    }
+
+    public function test_webhook_failed_after_success_restores_stock()
+    {
+        $product = Product::create([
+            'user_id' => $this->user->id,
+            'name' => 'Test Product',
+            'stok' => 10,
+            'harga' => 100000
+        ]);
+
+        $order = Order::create([
+            'user_id' => $this->user->id,
+            'orderable_id' => $product->id,
+            'orderable_type' => Product::class,
+            'order_id' => 'TEST-' . time(),
+            'gross_amount' => 100000,
+            'status' => 'pending',
+            'payment_method' => 'midtrans',
+            'qty' => 2
+        ]);
+
+        // Success
+        $this->postJson('/midtrans/webhook', [
+            'order_id' => $order->order_id,
+            'transaction_status' => 'settlement'
+        ]);
+
+        // Failed
+        $this->postJson('/midtrans/webhook', [
+            'order_id' => $order->order_id,
+            'transaction_status' => 'cancel'
+        ]);
+
+        $product->refresh();
+
+        $this->assertEquals(10, $product->stok);
+
+        $this->assertEquals(
+            1,
+            StockMovement::where('reference_id', $order->id)
+                ->where('type', 'in')
+                ->count()
+        );
+    }
+
+    public function test_admin_settlement_reduces_product_stock()
+    {
+        $product = Product::create([
+            'user_id' => $this->user->id,
+            'name' => 'Pakan Premium',
+            'stok' => 20,
+            'harga' => 50000
+        ]);
+
+        $order = Order::create([
+            'user_id' => $this->user->id,
+            'orderable_id' => $product->id,
+            'orderable_type' => Product::class,
+            'order_id' => 'ORDER-' . time(),
+            'gross_amount' => 100000,
+            'status' => 'pending',
+            'payment_method' => 'manual',
+            'qty' => 2
+        ]);
+
+        $this->actingAs($this->admin, 'superadmin')
+            ->postJson("/admin/order/{$order->id}/update-status", [
+                'status' => 'settlement'
+            ]);
+
+        $product->refresh();
+
+        $this->assertEquals(18, $product->stok);
+
+        $this->assertDatabaseHas('stock_movements', [
+            'reference_id' => $order->id,
+            'type' => 'out',
+            'quantity' => 2
+        ]);
+    }
+
+    public function test_admin_double_settlement_does_not_double_decrement()
+    {
+        $product = Product::create([
+            'user_id' => $this->user->id,
+            'name' => 'Obat Kambing',
+            'stok' => 10,
+            'harga' => 75000
+        ]);
+
+        $order = Order::create([
+            'user_id' => $this->user->id,
+            'orderable_id' => $product->id,
+            'orderable_type' => Product::class,
+            'order_id' => 'ORDER-' . time(),
+            'gross_amount' => 150000,
+            'status' => 'pending',
+            'payment_method' => 'manual',
+            'qty' => 2
+        ]);
+
+        // Settlement pertama
+        $this->actingAs($this->admin, 'superadmin')
+            ->postJson("/admin/order/{$order->id}/update-status", [
+                'status' => 'settlement'
+            ]);
+
+        // Settlement kedua (retry / double click)
+        $this->actingAs($this->admin, 'superadmin')
+            ->postJson("/admin/order/{$order->id}/update-status", [
+                'status' => 'settlement'
+            ]);
+
+        $product->refresh();
+
+        $this->assertEquals(8, $product->stok);
+
+        $this->assertEquals(
+            1,
+            StockMovement::where('reference_id', $order->id)
+                ->where('type', 'out')
+                ->count()
+        );
+    }
+
+    public function test_admin_cancel_after_settlement_restores_stock()
+    {
+        $product = Product::create([
+            'user_id' => $this->user->id,
+            'name' => 'Vitamin Domba',
+            'stok' => 15,
+            'harga' => 60000
+        ]);
+
+        $order = Order::create([
+            'user_id' => $this->user->id,
+            'orderable_id' => $product->id,
+            'orderable_type' => Product::class,
+            'order_id' => 'ORDER-' . time(),
+            'gross_amount' => 120000,
+            'status' => 'pending',
+            'payment_method' => 'manual',
+            'qty' => 2
+        ]);
+
+        // Settlement
+        $this->actingAs($this->admin, 'superadmin')
+            ->postJson("/admin/order/{$order->id}/update-status", [
+                'status' => 'settlement'
+            ]);
+
+        // Cancel
+        $this->actingAs($this->admin, 'superadmin')
+            ->postJson("/admin/order/{$order->id}/update-status", [
+                'status' => 'cancel'
+            ]);
+
+        $product->refresh();
+
+        $this->assertEquals(15, $product->stok);
+
+        $this->assertDatabaseHas('stock_movements', [
+            'reference_id' => $order->id,
+            'type' => 'in'
+        ]);
     }
 }
