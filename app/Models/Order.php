@@ -11,7 +11,8 @@ class Order extends Model
 
     protected $fillable = [
         'user_id',
-        'produk_id',
+        'orderable_id',
+        'orderable_type',
         'order_id',
         'snap_token',
         'gross_amount',

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class StockMovement extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'stockable_id',
         'stockable_type',
@@ -14,6 +15,7 @@ class StockMovement extends Model
         'quantity',
         'source',
         'reference_id',
+        'catatan',
         'movement_date'
     ];
 

@@ -13,6 +13,9 @@ return new class extends Migration {
             $table->string('kode')->unique();
             $table->string('nama');
 
+            //harga jual
+            $table->decimal('harga', 12, 2)->nullable();
+
             // stok produk jadi (kg)
             $table->decimal('stok', 10, 2)->default(0);
 

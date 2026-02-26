@@ -1,6 +1,7 @@
 @php
     use App\Models\Kambing;
     use App\Models\Domba;
+    use App\Models\Product;
 
     $kategoriProduk = request('kategori_produk', 'semua');
     $jenisList = [];
@@ -23,7 +24,7 @@
 
             {{-- Banner Gambar --}}
             <div class="mb-6">
-                <img src="{{ asset($produk->image ?? 'uploads/default.png') }}" alt="Gambar Produk"
+                <img src="{{ asset($item->image ?? 'uploads/default.png') }}" alt="Gambar Produk"
                     class="w-full h-48 object-cover rounded">
             </div>
 
@@ -46,7 +47,7 @@
                     <h2 class="text-xl font-bold mb-4">ISI DATA PENERIMA</h2>
                     <form id="checkoutForm" method="POST" enctype="multipart/form-data">
                         @csrf
-                        <input type="hidden" id="produk_id" name="produk_id" value="{{ $produk->id }}">
+                        <input type="hidden" id="produk_id" name="produk_id" value="{{ $item->id }}">
                         <input type="hidden" id="category" name="category" value="{{ $category }}">
 
                         {{-- Email --}}
@@ -60,15 +61,15 @@
                         {{-- Nama --}}
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700">*Name/Nama:</label>
-                            <input type="text" id="name" name="name"
-                                value="{{ old('name', Auth::user()->name ?? '') }}"
+                            <input type="text" id="name" name="name" value="{{ old('name', Auth::user()->name ?? '') }}"
                                 class="mt-1 block w-full border border-gray-300 rounded-md p-2" required>
                         </div>
 
                         {{-- Alamat --}}
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700">*Alamat:</label>
-                            <textarea id="address" name="address" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                            <textarea id="address" name="address" rows="3"
+                                class="mt-1 block w-full border border-gray-300 rounded-md p-2"
                                 required>{{ old('address', Auth::user()->alamat ?? '') }}</textarea>
                         </div>
 
@@ -76,8 +77,7 @@
                             {{-- Kota --}}
                             <div class="mb-4">
                                 <label class="block text-sm font-medium text-gray-700">*Kota:</label>
-                                <input type="text" id="city" name="city"
-                                    value="{{ old('city', Auth::user()->kota ?? '') }}"
+                                <input type="text" id="city" name="city" value="{{ old('city', Auth::user()->kota ?? '') }}"
                                     class="mt-1 block w-full border border-gray-300 rounded-md p-2" required>
                             </div>
 
@@ -117,7 +117,8 @@
                                     <p>No. Rekening: 761801018897538</p>
                                     <p>Atas Nama: SI MBEK</p>
                                     <p class="text-green-600 mt-2">Jumlah Transfer: Rp
-                                        {{ number_format($produk->harga, 0, ',', '.') }}</p>
+                                        {{ number_format($item->harga, 0, ',', '.') }}
+                                    </p>
                                 </div>
                             </div>
 
@@ -141,7 +142,7 @@
                             </div>
                             <div class="mb-4">
                                 <label class="block text-sm font-medium text-gray-700">*Jumlah Transfer (Rp):</label>
-                                <input type="number" name="transfer_amount" value="{{ $produk->harga }}"
+                                <input type="number" name="transfer_amount" value="{{ $item->harga }}"
                                     class="mt-1 block w-full border border-gray-300 rounded-md p-2" readonly>
                             </div>
                             <div class="mb-4">
@@ -164,18 +165,27 @@
                 <div class="w-full md:w-1/3 mt-6 md:mt-0">
                     <h3 class="text-xl font-semibold text-gray-800 mb-4">Yang Anda Dapatkan</h3>
                     <ul class="list-disc pl-6 space-y-2 text-sm text-gray-700">
-                        <li><span class="font-medium">1 Ekor {{ ucfirst($category) }}</span> sesuai syariat Islam</li>
+                        <li>
+                            <span class="font-medium">
+                                {{ $category === 'product' ? '1 Produk' : '1 Ekor ' . ucfirst($category) }}
+                            </span>
+                            {{ $category === 'product' ? '' : 'sesuai syariat Islam' }}
+                        </li>
                         <li>
                             <span class="font-medium">Status Kesehatan:</span>
-                            <span
-                                class="{{ strtolower($produk->faksin_status) === 'tidak aktif' ? 'text-red-600' : 'text-green-600' }}">
-                                {{ strtolower($produk->faksin_status) === 'tidak' ? 'Belum divaksin' : 'Sudah divaksin' }}
-                            </span>
-                            &
-                            <span
-                                class="{{ strtolower($produk->healt_status) === 'sehat' ? 'text-green-600' : 'text-red-600' }}">
-                                {{ strtolower($produk->healt_status) === 'sehat' ? 'Sehat' : 'Tidak sehat' }}
-                            </span>
+                            @if($category === 'kambing' || $category === 'domba')
+                                <span
+                                    class="{{ strtolower($item->faksin_status ?? '') === 'tidak aktif' ? 'text-red-600' : 'text-green-600' }}">
+                                    {{ strtolower($item->faksin_status ?? '') === 'tidak' ? 'Belum divaksin' : 'Sudah divaksin' }}
+                                </span>
+                                &
+                                <span
+                                    class="{{ strtolower($item->healt_status ?? '') === 'sehat' ? 'text-green-600' : 'text-red-600' }}">
+                                    {{ strtolower($item->healt_status ?? '') === 'sehat' ? 'Sehat' : 'Tidak sehat' }}
+                                </span>
+                            @else
+                                <span class="text-green-600">Produk Berkualitas</span>
+                            @endif
                         </li>
 
                         <li>Garansi tukar jika sakit saat diterima <span class="text-xs text-gray-500">(S&K
@@ -186,32 +196,40 @@
                     <div class="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4 shadow-sm">
                         <h4 class="text-base font-semibold text-gray-800 mb-2">Deskripsi Produk</h4>
                         <ul class="list-disc pl-6 space-y-2 text-sm text-gray-700">
-                            <li><span class="font-medium"></span> {{ $produk->name ?? ucfirst($kategoriProduk) }}</li>
-                            <li><span class="font-medium">Jenis Kelamin:</span> {{ $produk->jenis_kelamin ?? '-' }}
-                            </li>
-                            <li><span class="font-medium">Berat Saat Ini:</span> {{ $produk->weight_now ?? '-' }} kg
-                            </li>
-                            @php
-                                $birthDate = new DateTime($produk->tanggal_lahir);
-                                $today = new DateTime();
-                                $diff = $today->diff($birthDate);
+                            <li><span class="font-medium"></span> {{ $item->name ?? ucfirst($kategoriProduk) }}</li>
+                            @if($category === 'kambing' || $category === 'domba')
+                                <li><span class="font-medium">Jenis Kelamin:</span> {{ $item->jenis_kelamin ?? '-' }}</li>
+                                <li><span class="font-medium">Berat Saat Ini:</span> {{ $item->weight_now ?? '-' }} kg
+                                </li>
+                            @endif
+                            @if(($category === 'kambing' || $category === 'domba') && !empty($item->tanggal_lahir))
+                                @php
+                                    $birthDate = new DateTime($item->tanggal_lahir);
+                                    $today = new DateTime();
+                                    $diff = $today->diff($birthDate);
+                                    $years = $diff->y;
+                                    $months = $diff->m;
+                                @endphp
+                            @endif
 
-                                $years = $diff->y;
-                                $months = $diff->m;
-                            @endphp
-
-                            <li>
-                                <span class="font-medium">Perkiraan Umur:</span>
-                                @if ($years > 0 && $months > 0)
-                                    {{ $years }} tahun {{ $months }} bulan
-                                @elseif($years > 0)
-                                    {{ $years }} tahun
-                                @elseif($months > 0)
-                                    {{ $months }} bulan
-                                @else
-                                    Baru lahir
-                                @endif
-                            </li>
+                            @if($category === 'kambing' || $category === 'domba')
+                                <li>
+                                    <span class="font-medium">Perkiraan Umur:</span>
+                                    @if(isset($years))
+                                        @if ($years > 0 && $months > 0)
+                                            {{ $years }} tahun {{ $months }} bulan
+                                        @elseif($years > 0)
+                                            {{ $years }} tahun
+                                        @elseif($months > 0)
+                                            {{ $months }} bulan
+                                        @else
+                                            Baru lahir
+                                        @endif
+                                    @else
+                                        -
+                                    @endif
+                                </li>
+                            @endif
 
                         </ul>
                     </div>
@@ -223,13 +241,13 @@
                     <div class="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4 shadow-sm">
                         <h4 class="text-base font-semibold text-gray-800 mb-2">Rincian Pesanan</h4>
                         <div class="text-sm text-gray-700 space-y-1">
-                            <p>Harga {{ ucfirst($category) }}:
+                            <p>Harga {{ $category === 'product' ? 'Produk' : ucfirst($category) }}:
                                 <span class="font-semibold text-gray-900">Rp
-                                    {{ number_format($produk->harga, 0, ',', '.') }}</span>
+                                    {{ number_format($item->harga, 0, ',', '.') }}</span>
                             </p>
                             <p>Total:
                                 <span class="font-semibold text-green-700">Rp
-                                    {{ number_format($produk->harga, 0, ',', '.') }}</span>
+                                    {{ number_format($item->harga, 0, ',', '.') }}</span>
                             </p>
                         </div>
                     </div>
@@ -240,7 +258,7 @@
 
     {{-- Script yang sudah diperbaiki --}}
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const btnMidtrans = document.getElementById('btnMidtrans');
             const btnManual = document.getElementById('btnManual');
             const paymentMethodInput = document.getElementById('payment_method');
@@ -315,7 +333,7 @@
             }
 
             // Event listener untuk switch payment method
-            btnMidtrans.addEventListener('click', function() {
+            btnMidtrans.addEventListener('click', function () {
                 paymentMethodInput.value = 'midtrans';
                 manualFields.classList.add('hidden');
                 btnMidtrans.classList.add('active', 'bg-brand-orange', 'text-white');
@@ -325,7 +343,7 @@
                 submitText.textContent = 'Bayar Sekarang';
             });
 
-            btnManual.addEventListener('click', function() {
+            btnManual.addEventListener('click', function () {
                 paymentMethodInput.value = 'manual';
                 manualFields.classList.remove('hidden');
                 btnManual.classList.add('active', 'bg-brand-orange', 'text-white');
@@ -336,7 +354,7 @@
             });
 
             // Form submission handler
-            form.addEventListener('submit', function(e) {
+            form.addEventListener('submit', function (e) {
                 e.preventDefault();
 
                 const paymentMethod = paymentMethodInput.value;
@@ -363,14 +381,14 @@
                 if (paymentMethod === 'midtrans') {
                     // Process Midtrans payment
                     fetch(`${window.location.origin}/midtrans/token`, {
-                            method: 'POST',
-                            headers: {
-                                'Accept': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
-                                    ?.getAttribute('content')
-                            },
-                            body: formData
-                        })
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+                                ?.getAttribute('content')
+                        },
+                        body: formData
+                    })
                         .then(response => {
                             console.log('Midtrans response status:', response.status);
                             if (!response.ok) {
@@ -390,14 +408,14 @@
 
                             // Open Midtrans popup
                             window.snap.pay(data.snap_token, {
-                                onSuccess: function(result) {
+                                onSuccess: function (result) {
                                     console.log('Payment success:', result);
                                     showSuccessMessage(
                                         'Pembayaran berhasil! Anda akan dialihkan ke halaman invoice.',
                                         `${window.location.origin}/order/invoice/${result.order_id}`
                                     );
                                 },
-                                onPending: function(result) {
+                                onPending: function (result) {
                                     console.log('Payment pending:', result);
                                     Swal.fire({
                                         title: 'Pembayaran Tertunda',
@@ -408,7 +426,7 @@
                                             `${window.location.origin}/order/invoice/${result.order_id}`;
                                     });
                                 },
-                                onError: function(result) {
+                                onError: function (result) {
                                     console.log('Payment error:', result);
                                     Swal.fire({
                                         title: 'Error!',
@@ -416,7 +434,7 @@
                                         icon: 'error'
                                     });
                                 },
-                                onClose: function() {
+                                onClose: function () {
                                     console.log('Payment popup closed');
                                     Swal.fire({
                                         title: 'Pembayaran Dibatalkan',
@@ -442,14 +460,14 @@
                     console.log('Processing manual transfer...');
 
                     fetch(`${window.location.origin}/manual/transfer`, {
-                            method: 'POST',
-                            headers: {
-                                'Accept': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
-                                    ?.getAttribute('content')
-                            },
-                            body: formData
-                        })
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+                                ?.getAttribute('content')
+                        },
+                        body: formData
+                    })
                         .then(response => {
                             console.log('Manual transfer response status:', response.status);
                             console.log('Manual transfer response headers:', response.headers);

@@ -40,7 +40,7 @@ class PurchaseOrderFactory extends Factory
             'dicatat_oleh_id' => $pencatat->id,
             'dicatat_oleh_type' => get_class($pencatat),
 
-            'catatan_owner' => $this->faker->optional()->sentence(),
+            'catatan' => $this->faker->optional()->sentence(),
         ];
     }
 

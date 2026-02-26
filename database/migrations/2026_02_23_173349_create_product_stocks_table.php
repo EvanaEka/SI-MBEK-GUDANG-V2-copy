@@ -19,7 +19,7 @@ return new class extends Migration {
             $table->integer('qty');
 
             // Sumber stok
-            $table->enum('source', ['production', 'purchase', 'manual_adjustment']);
+            $table->enum('source', ['production', 'purchase', 'sale', 'manual_adjustment']);
 
             // ID referensi (production_id atau purchase_order_id)
             $table->unsignedBigInteger('reference_id')->nullable();
@@ -29,6 +29,9 @@ return new class extends Migration {
 
             // Expired date (penting untuk obat & pakan)
             $table->date('expired_date')->nullable();
+
+            // harga per unit (optional tapi bagus untuk laporan)
+            $table->decimal('price_per_unit', 12, 2)->nullable();
 
             $table->timestamps();
 

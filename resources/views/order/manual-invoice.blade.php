@@ -63,8 +63,8 @@
                 <h2 class="text-xl font-semibold mb-3 text-gray-800">Detail Produk</h2>
                 <div class="bg-gray-50 p-4 rounded-lg">
                     @php
-                        $produk = $order->kambing ?? $order->domba;
-                        $kategori = $order->kambing ? 'Kambing' : 'Domba';
+                        $produk = $order->orderable;
+                        $kategori = $produk ? class_basename($order->orderable_type) : null;
                     @endphp
                     @if ($produk)
                         <div class="flex flex-col md:flex-row gap-4">
@@ -74,35 +74,43 @@
                             @endif
                             <div class="flex-1">
                                 <h3 class="font-semibold text-lg">{{ $kategori }} -
-                                    {{ $produk->name ?? 'Unnamed' }}</h3>
+                                    {{ $produk->name ?? 'Unnamed' }}
+                                </h3>
                                 <p class="text-gray-600 mb-2">{{ $produk->deskripsi ?? 'Tidak ada deskripsi' }}</p>
                                 <div class="grid grid-cols-2 gap-2 text-sm">
-                                    <div>
-                                        <span class="text-gray-600">Berat:</span>
-                                        <span class="font-medium">{{ $produk->weight_now ?? '-' }} kg</span>
-                                    </div>
-                                    <div>
-                                        <span class="text-gray-600">Umur:</span>
-                                        <span class="font-medium text-gray-900">
-                                            @php
-                                            $birthDate = new DateTime($produk->tanggal_lahir);
-                                            $today = new DateTime();
-                                            $diff = $today->diff($birthDate);
+                                    @if($produk instanceof \App\Models\Kambing || $produk instanceof \App\Models\Domba)
 
-                                            $years = $diff->y;
-                                            $months = $diff->m;
-                                        @endphp
-                                            @if ($years > 0 && $months > 0)
-                                                {{ $years }} tahun {{ $months }} bulan
-                                            @elseif($years > 0)
-                                                {{ $years }} tahun
-                                            @elseif($months > 0)
-                                                {{ $months }} bulan
-                                            @else
-                                                Baru lahir
-                                            @endif
-                                        </span>
-                                    </div>
+                                        <div>
+                                            <span class="text-gray-600">Berat:</span>
+                                            <span class="font-medium">{{ $produk->weight_now ?? '-' }} kg</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-600">Umur:</span>
+                                            <span class="font-medium text-gray-900">
+                                                @if(isset($produk->tanggal_lahir) && $produk->tanggal_lahir)
+                                                    @php
+                                                        $birthDate = new DateTime($produk->tanggal_lahir);
+                                                        $today = new DateTime();
+                                                        $diff = $today->diff($birthDate);
+                                                        $years = $diff->y;
+                                                        $months = $diff->m;
+                                                    @endphp
+
+                                                    @if ($years > 0 && $months > 0)
+                                                        {{ $years }} tahun {{ $months }} bulan
+                                                    @elseif($years > 0)
+                                                        {{ $years }} tahun
+                                                    @elseif($months > 0)
+                                                        {{ $months }} bulan
+                                                    @else
+                                                        Baru lahir
+                                                    @endif
+                                                @else
+                                                    -
+                                                @endif
+                                            </span>
+                                        </div>
+                                    @endif
                                     <div>
                                         <span class="text-gray-600">Jenis Kelamin:</span>
                                         <span class="font-medium">{{ $produk->jenis_kelamin ?? '-' }}</span>
@@ -158,7 +166,8 @@
                         <div>
                             <p class="text-sm text-gray-600">Tanggal Transfer</p>
                             <p class="font-medium">
-                                {{ $order->transfer_date ? $order->transfer_date->format('d F Y') : '-' }}</p>
+                                {{ $order->transfer_date ? $order->transfer_date->format('d F Y') : '-' }}
+                            </p>
                         </div>
                     </div>
 
@@ -209,8 +218,7 @@
                 @elseif($order->status === 'failed' || $order->status === 'cancel')
                     <div class="bg-red-50 border border-red-200 p-4 rounded-lg mb-4">
                         <div class="flex items-start space-x-3">
-                            <svg class="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" fill="currentColor"
-                                viewBox="0 0 20 20">
+                            <svg class="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd"
                                     d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
                                     clip-rule="evenodd"></path>
@@ -255,8 +263,7 @@
     </div>
 
     {{-- Modal untuk memperbesar gambar --}}
-    <div id="imageModal"
-        class="fixed inset-0 bg-black bg-opacity-75 hidden z-50 flex items-center justify-center p-4">
+    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-75 hidden z-50 flex items-center justify-center p-4">
         <div class="relative max-w-4xl max-h-full">
             <img id="modalImage" src="" alt="Bukti Transfer" class="max-w-full max-h-full object-contain">
             <button onclick="closeImageModal()"
@@ -282,14 +289,14 @@
         }
 
         // Close modal when clicking outside the image
-        document.getElementById('imageModal').addEventListener('click', function(e) {
+        document.getElementById('imageModal').addEventListener('click', function (e) {
             if (e.target === this) {
                 closeImageModal();
             }
         });
 
         // Close modal with Escape key
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 closeImageModal();
             }

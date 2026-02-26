@@ -39,18 +39,22 @@ class DatabaseSeeder extends Seeder
         $this->call([
             DombaSeeder::class,
             KambingSeeder::class,
+            ProductSeeder::class,
         ]);
 
         // 5. History (TERAKHIR)
         $this->call([
             DombaHistorySeeder::class,
             KambingHistorySeeder::class,
+            PurchaseOrderSeeder::class,
         ]);
 
         //6. Indikator QC
         $this->call([
             QcIndicatorSeeder::class,
             ProductionQcSeeder::class,
+            OrderSeeder::class,
+            StockMovementSeeder::class,
         ]);
     }
 

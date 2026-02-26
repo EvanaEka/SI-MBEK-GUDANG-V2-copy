@@ -12,6 +12,8 @@ class Product extends Model
     protected $fillable = [
         'kode',
         'nama',
+        //harga jual
+        'harga',
         'stok',
         'formula_id',
         'type',
@@ -62,6 +64,6 @@ class Product extends Model
 
     public function stocks()
     {
-        return $this->hasMany(ProductStock::class);
+        return $this->hasMany(ProductStock::class, 'product_id');
     }
 }

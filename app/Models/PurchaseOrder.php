@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class PurchaseOrder extends Model
 {
     use HasFactory;
-    
+
     protected $fillable = [
         'kode_po',
         'supplier_id',
@@ -23,7 +23,7 @@ class PurchaseOrder extends Model
         'dipesan_oleh_type',
         'dicatat_oleh_id',
         'dicatat_oleh_type',
-        'catatan_owner',
+        'catatan',
         'tanggal_disetujui',
         'tanggal_diterima',
     ];
@@ -40,9 +40,9 @@ class PurchaseOrder extends Model
     /**
      * Admin/Owner yang mencatat PO
      */
-    public function dicatatOleh():MorphTo
+    public function dicatatOleh(): MorphTo
     {
-          return $this->morphTo(__FUNCTION__, 'dicatat_oleh_type', 'dicatat_oleh_id');
+        return $this->morphTo(__FUNCTION__, 'dicatat_oleh_type', 'dicatat_oleh_id');
     }
 
     /**
@@ -59,5 +59,10 @@ class PurchaseOrder extends Model
     public function items(): HasMany
     {
         return $this->hasMany(PurchaseOrderItem::class);
+    }
+
+    public function stockMovements()
+    {
+        return $this->morphMany(StockMovement::class, 'stockable');
     }
 }

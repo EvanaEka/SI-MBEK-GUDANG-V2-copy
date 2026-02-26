@@ -17,6 +17,7 @@ class ProductStock extends Model
         'reference_id',
         'received_date',
         'expired_date',
+        'price_per_unit',
     ];
 
     /**

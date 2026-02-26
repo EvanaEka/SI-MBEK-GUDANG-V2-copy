@@ -91,8 +91,8 @@
                 <h2 class="text-xl font-semibold mb-3 text-gray-800">Detail Produk</h2>
                 <div class="bg-gray-50 p-4 rounded-lg">
                     @php
-                        $produk = $order->kambing ?? $order->domba;
-                        $kategori = $order->kambing ? 'Kambing' : 'Domba';
+                        $produk = $order->orderable;
+                        $kategori = $produk ? class_basename($order->orderable_type) : null;
                     @endphp
                     @if ($produk)
                         <div class="flex flex-col md:flex-row gap-4">
@@ -100,8 +100,7 @@
                                 <img src="{{ asset($produk->image) }}" alt="Gambar {{ $kategori }}"
                                     class="md:w-32 h-32 object-cover rounded-lg border">
                             @else
-                                <div
-                                    class="w-full md:w-32 h-32 bg-gray-200 rounded-lg border flex items-center justify-center">
+                                <div class="w-full md:w-32 h-32 bg-gray-200 rounded-lg border flex items-center justify-center">
                                     <svg class="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd"
                                             d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
@@ -111,7 +110,8 @@
                             @endif
                             <div class="flex-1">
                                 <h3 class="font-semibold text-lg text-gray-900">{{ $kategori }} -
-                                    {{ $produk->name ?? 'Unnamed' }}</h3>
+                                    {{ $produk->name ?? 'Unnamed' }}
+                                </h3>
                                 <p class="text-gray-600 mb-2">{{ $produk->deskripsi ?? 'Tidak ada deskripsi' }}</p>
                                 <div class="grid grid-cols-2 gap-2 text-sm">
                                     <div>
@@ -122,29 +122,32 @@
                                     <div>
                                         <span class="text-gray-600">Umur:</span>
                                         <span class="font-medium text-gray-900">
-                                            @php
-                                                $birthDate = new DateTime($produk->tanggal_lahir);
-                                                $today = new DateTime();
-                                                $diff = $today->diff($birthDate);
+                                            @if(isset($produk->tanggal_lahir) && $produk->tanggal_lahir)
+                                                @php
+                                                    $birthDate = new DateTime($produk->tanggal_lahir);
+                                                    $today = new DateTime();
+                                                    $diff = $today->diff($birthDate);
+                                                    $years = $diff->y;
+                                                    $months = $diff->m;
+                                                @endphp
 
-                                                $years = $diff->y;
-                                                $months = $diff->m;
-                                            @endphp
-                                            @if ($years > 0 && $months > 0)
-                                                {{ $years }} tahun {{ $months }} bulan
-                                            @elseif($years > 0)
-                                                {{ $years }} tahun
-                                            @elseif($months > 0)
-                                                {{ $months }} bulan
+                                                @if ($years > 0 && $months > 0)
+                                                    {{ $years }} tahun {{ $months }} bulan
+                                                @elseif($years > 0)
+                                                    {{ $years }} tahun
+                                                @elseif($months > 0)
+                                                    {{ $months }} bulan
+                                                @else
+                                                    Baru lahir
+                                                @endif
                                             @else
-                                                Baru lahir
+                                                -
                                             @endif
                                         </span>
                                     </div>
                                     <div>
                                         <span class="text-gray-600">Jenis Kelamin:</span>
-                                        <span
-                                            class="font-medium text-gray-900">{{ $produk->jenis_kelamin ?? '-' }}</span>
+                                        <span class="font-medium text-gray-900">{{ $produk->jenis_kelamin ?? '-' }}</span>
                                     </div>
                                     <div>
                                         <span class="text-gray-600">Status Kesehatan:</span>
@@ -158,8 +161,11 @@
                         </div>
                     @else
                         <div class="text-center py-4">
-                            <p class="text-gray-600">Informasi produk tidak tersedia</p>
-                            <p class="text-sm text-gray-500">Produk ID: {{ $order->produk_id ?? 'N/A' }}</p>
+                            <p class="text-gray-600">Informasi item tidak tersedia</p>
+                            <p class="text-sm text-gray-500">
+                                ID: {{ $order->orderable_id ?? 'N/A' }} <br>
+                                Type: {{ class_basename($order->orderable_type ?? 'Unknown') }}
+                            </p>
                         </div>
                     @endif
 
@@ -186,8 +192,7 @@
                 @if ($order->payment_method === 'midtrans')
                     <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
                         <div class="flex items-start space-x-3">
-                            <svg class="w-6 h-6 text-blue-600 mt-0.5 flex-shrink-0" fill="currentColor"
-                                viewBox="0 0 20 20">
+                            <svg class="w-6 h-6 text-blue-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
                                 <path fill-rule="evenodd"
                                     d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"
@@ -271,8 +276,7 @@
                         </div>
                     @else
                         <div class="flex items-start space-x-3">
-                            <svg class="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="currentColor"
-                                viewBox="0 0 20 20">
+                            <svg class="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd"
                                     d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
                                     clip-rule="evenodd" />
@@ -350,21 +354,21 @@
         <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}">
         </script>
         <script>
-            document.getElementById('pay-button').addEventListener('click', function() {
+            document.getElementById('pay-button').addEventListener('click', function () {
                 window.snap.pay('{{ $order->snap_token }}', {
-                    onSuccess: function(result) {
+                    onSuccess: function (result) {
                         console.log('Payment success:', result);
                         window.location.reload();
                     },
-                    onPending: function(result) {
+                    onPending: function (result) {
                         console.log('Payment pending:', result);
                         window.location.reload();
                     },
-                    onError: function(result) {
+                    onError: function (result) {
                         console.log('Payment error:', result);
                         alert('Terjadi kesalahan dalam pembayaran. Silakan coba lagi.');
                     },
-                    onClose: function() {
+                    onClose: function () {
                         console.log('Payment popup closed');
                     }
                 });

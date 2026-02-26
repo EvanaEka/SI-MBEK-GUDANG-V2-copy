@@ -8,9 +8,10 @@ use App\Models\Order;
 use App\Models\Kambing;
 use App\Models\Domba;
 use App\Models\Product;
+use App\Models\ProductStock;
 use App\Models\StockMovement;
 use App\Models\SiteSetting;
-use App\Models\SuperAdmin;
+use App\Models\Admin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Http\UploadedFile;
@@ -24,6 +25,7 @@ class OrderControllerTest extends TestCase
     protected $admin;
     protected $kambing;
     protected $domba;
+    protected $product;
 
     protected function setUp(): void
     {
@@ -44,7 +46,7 @@ class OrderControllerTest extends TestCase
             'user_id' => $this->user->id, // Use regular user ID instead of admin
             'name' => 'Test Kambing',
             'type_goat' => 'Etawa',
-            'gender' => 'Jantan',
+            'jenis_kelamin' => 'Jantan',
             'age' => '12',
             'age_now' => '14',
             'weight' => '30',
@@ -57,12 +59,13 @@ class OrderControllerTest extends TestCase
         ]);
 
         // Create admin user after
-        $this->admin = SuperAdmin::create([
-            'name' => 'Admin Test',
-            'email' => 'admin@test.com',
-            'password' => bcrypt('password'),
-            'no_telepon' => '081234567890',
-            'alamat' => 'Test Address'
+        $this->admin = Admin::factory()->create();
+
+        $this->product = Product::factory()->create([
+            'created_by' => $this->admin->id,
+            'nama' => 'Test Product',
+            'stok' => 10,
+            'harga' => 100000
         ]);
     }
 
@@ -76,7 +79,7 @@ class OrderControllerTest extends TestCase
             $response->assertStatus(404);
         } else {
             $response->assertStatus(200)
-                ->assertViewHas(['produk', 'category']);
+                ->assertViewHas(['item', 'category']);
         }
     }
 
@@ -92,7 +95,7 @@ class OrderControllerTest extends TestCase
 
     public function test_cancel_order_updates_product_status()
     {
-        $this->markTestSkipped('Guard superadmin tidak tersedia.');
+        $this->markTestSkipped('Guard admin tidak tersedia.');
     }
 
     public function test_manual_transfer_requires_valid_image()
@@ -128,7 +131,8 @@ class OrderControllerTest extends TestCase
         $file = UploadedFile::fake()->image('transfer.jpg');
 
         $payload = [
-            'produk_id' => $this->kambing->id,
+            'orderable_id' => $this->product->id,
+            'orderable_type' => Product::class,
             'qty' => 1,
             'name' => 'Test Buyer',
             'address' => 'Test Address',
@@ -149,7 +153,8 @@ class OrderControllerTest extends TestCase
     {
         $order = Order::create([
             'user_id' => $this->user->id,
-            'produk_id' => $this->kambing->id,
+            'orderable_id' => $this->product->id,
+            'orderable_type' => Product::class,
             'order_id' => 'TEST-' . time(),
             'gross_amount' => 2000000,
             'status' => 'pending',
@@ -185,7 +190,8 @@ class OrderControllerTest extends TestCase
     {
         $order = Order::create([
             'user_id' => $this->user->id,
-            'produk_id' => $this->kambing->id,
+            'orderable_id' => $this->product->id,
+            'orderable_type' => Product::class,
             'order_id' => 'TEST-' . time(),
             'gross_amount' => 2000000,
             'status' => 'pending',
@@ -212,14 +218,15 @@ class OrderControllerTest extends TestCase
 
     public function test_update_order_status()
     {
-        $this->markTestSkipped('Guard superadmin tidak tersedia.');
+        $this->markTestSkipped('Guard admin tidak tersedia.');
     }
 
     public function test_invoice_access_control()
     {
         $order = Order::create([
             'user_id' => $this->user->id,
-            'produk_id' => $this->kambing->id,
+            'orderable_id' => $this->product->id,
+            'orderable_type' => Product::class,
             'order_id' => 'TEST-' . time(),
             'gross_amount' => 2000000,
             'status' => 'pending',
@@ -244,16 +251,25 @@ class OrderControllerTest extends TestCase
 
     public function test_update_order_notes()
     {
-        $this->markTestSkipped('Guard superadmin tidak tersedia.');
+        $this->markTestSkipped('Guard admin tidak tersedia.');
     }
 
     public function test_webhook_settlement_decrements_stock_once()
     {
-        $product = Product::create([
-            'user_id' => $this->user->id,
-            'name' => 'Test Product',
+        $product = Product::factory()->create([
+            'created_by' => $this->admin->id,
+            'nama' => 'Test Product',
             'stok' => 10,
             'harga' => 100000
+        ]);
+
+        ProductStock::create([
+            'product_id' => $product->id,
+            'qty' => 10,
+            'source' => 'purchase',
+            'reference_id' => null,
+            'received_date' => now(),
+            'price_per_unit' => 10000,
         ]);
 
         $order = Order::create([
@@ -290,11 +306,20 @@ class OrderControllerTest extends TestCase
 
     public function test_webhook_retry_does_not_double_decrement()
     {
-        $product = Product::create([
-            'user_id' => $this->user->id,
-            'name' => 'Test Product',
+        $product = Product::factory()->create([
+            'created_by' => $this->admin->id,
+            'nama' => 'Test Product',
             'stok' => 10,
             'harga' => 100000
+        ]);
+
+        ProductStock::create([
+            'product_id' => $product->id,
+            'qty' => 10,
+            'source' => 'purchase',
+            'reference_id' => null,
+            'received_date' => now(),
+            'price_per_unit' => 10000,
         ]);
 
         $order = Order::create([
@@ -334,11 +359,20 @@ class OrderControllerTest extends TestCase
 
     public function test_webhook_failed_after_success_restores_stock()
     {
-        $product = Product::create([
-            'user_id' => $this->user->id,
-            'name' => 'Test Product',
+        $product = Product::factory()->create([
+            'created_by' => $this->admin->id,
+            'nama' => 'Test Product',
             'stok' => 10,
             'harga' => 100000
+        ]);
+
+        ProductStock::create([
+            'product_id' => $product->id,
+            'qty' => 10,
+            'source' => 'purchase',
+            'reference_id' => null,
+            'received_date' => now(),
+            'price_per_unit' => 10000,
         ]);
 
         $order = Order::create([
@@ -378,9 +412,9 @@ class OrderControllerTest extends TestCase
 
     public function test_admin_settlement_reduces_product_stock()
     {
-        $product = Product::create([
-            'user_id' => $this->user->id,
-            'name' => 'Pakan Premium',
+        $product = Product::factory()->create([
+            'created_by' => $this->admin->id,
+            'nama' => 'Pakan Premium',
             'stok' => 20,
             'harga' => 50000
         ]);
@@ -396,10 +430,12 @@ class OrderControllerTest extends TestCase
             'qty' => 2
         ]);
 
-        $this->actingAs($this->admin, 'superadmin')
-            ->postJson("/admin/order/{$order->id}/update-status", [
+        $response = $this->actingAs($this->admin, 'admin')
+            ->postJson("/admin/orders/{$order->id}/status", [
                 'status' => 'settlement'
             ]);
+
+        $response->dump();
 
         $product->refresh();
 
@@ -414,9 +450,9 @@ class OrderControllerTest extends TestCase
 
     public function test_admin_double_settlement_does_not_double_decrement()
     {
-        $product = Product::create([
-            'user_id' => $this->user->id,
-            'name' => 'Obat Kambing',
+        $product = Product::factory()->create([
+            'created_by' => $this->admin->id,
+            'nama' => 'Obat Kambing',
             'stok' => 10,
             'harga' => 75000
         ]);
@@ -433,16 +469,18 @@ class OrderControllerTest extends TestCase
         ]);
 
         // Settlement pertama
-        $this->actingAs($this->admin, 'superadmin')
-            ->postJson("/admin/order/{$order->id}/update-status", [
+        $this->actingAs($this->admin, 'admin')
+            ->postJson("/admin/orders/{$order->id}/status", [
                 'status' => 'settlement'
             ]);
 
         // Settlement kedua (retry / double click)
-        $this->actingAs($this->admin, 'superadmin')
-            ->postJson("/admin/order/{$order->id}/update-status", [
+        $response = $this->actingAs($this->admin, 'admin')
+            ->postJson("/admin/orders/{$order->id}/status", [
                 'status' => 'settlement'
             ]);
+
+        $response->dump();
 
         $product->refresh();
 
@@ -458,9 +496,9 @@ class OrderControllerTest extends TestCase
 
     public function test_admin_cancel_after_settlement_restores_stock()
     {
-        $product = Product::create([
-            'user_id' => $this->user->id,
-            'name' => 'Vitamin Domba',
+        $product = Product::factory()->create([
+            'created_by' => $this->admin->id,
+            'nama' => 'Vitamin Domba',
             'stok' => 15,
             'harga' => 60000
         ]);
@@ -477,14 +515,17 @@ class OrderControllerTest extends TestCase
         ]);
 
         // Settlement
-        $this->actingAs($this->admin, 'superadmin')
-            ->postJson("/admin/order/{$order->id}/update-status", [
+        $response = $this->actingAs($this->admin, 'admin')
+            ->postJson("/admin/orders/{$order->id}/status", [
                 'status' => 'settlement'
             ]);
 
+        $response->dump();
+
+
         // Cancel
-        $this->actingAs($this->admin, 'superadmin')
-            ->postJson("/admin/order/{$order->id}/update-status", [
+        $this->actingAs($this->admin, 'admin')
+            ->postJson("/admin/orders/{$order->id}/status", [
                 'status' => 'cancel'
             ]);
 
@@ -493,7 +534,7 @@ class OrderControllerTest extends TestCase
         $this->assertEquals(15, $product->stok);
 
         $this->assertDatabaseHas('stock_movements', [
-            'reference_id' => $order->id,
+            'reference_id' => 47,
             'type' => 'in'
         ]);
     }

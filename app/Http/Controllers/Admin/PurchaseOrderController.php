@@ -97,7 +97,7 @@ class PurchaseOrderController extends Controller
                 'dipesan_oleh_type' => get_class($pemesan),
                 'dicatat_oleh_id' => $pencatat->id,
                 'dicatat_oleh_type' => get_class($pencatat),
-                'catatan_owner' => $request->catatan_owner,
+                'catatan' => $request->catatan,
             ]);
 
             foreach ($request->items as $item) {
@@ -276,6 +276,8 @@ class PurchaseOrderController extends Controller
                         'quantity' => $jumlahDiterima,
                         'source' => 'PO',
                         'reference_id' => $purchaseOrder->id,
+                        'note' => 'PO ' . $purchaseOrder->kode_po .
+                            ($purchaseOrder->catatan ? ' | ' . $purchaseOrder->catatan : ''),
                         'movement_date' => now(),
                     ]);
                 }

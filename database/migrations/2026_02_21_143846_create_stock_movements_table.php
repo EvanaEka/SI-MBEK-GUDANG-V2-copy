@@ -27,6 +27,8 @@ return new class extends Migration {
             $table->unsignedBigInteger('reference_id')->nullable();
             // id PO, id Production, id Order dll
 
+            $table->string('catatan')->nullable();
+
             $table->timestamp('movement_date')->useCurrent();
 
             $table->timestamps();

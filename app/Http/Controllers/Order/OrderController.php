@@ -7,6 +7,7 @@ use App\Models\Kambing;
 use App\Models\Domba;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\ProductStock;
 use App\Models\ActivityLog;
 use App\Models\StockMovement;
 use Illuminate\Http\Request;
@@ -40,7 +41,9 @@ class OrderController extends Controller
     {
         $kambings = Kambing::where('for_sale', 'yes')->get();
         $dombas = Domba::where('for_sale', 'yes')->get();
-        $products = Product::where('stok', '>', 0)->get();
+        $products = Product::whereHas('stocks', function ($q) {
+            $q->where('qty', '>', 0);
+        })->get();
 
         return view('order', compact('kambings', 'dombas', 'products'));
     }
@@ -50,13 +53,28 @@ class OrderController extends Controller
      */
     public function show($category, $id)
     {
-        if ($category === 'kambing') {
-            $item = Kambing::findOrFail($id);
-        } else {
-            $item = Domba::findOrFail($id);
+        switch ($category) {
+            case 'kambing':
+                $item = Kambing::findOrFail($id);
+                break;
+
+            case 'domba':
+                $item = Domba::findOrFail($id);
+                break;
+
+            case 'product':
+                $item = Product::findOrFail($id);
+                break;
+
+            default:
+                abort(404);
         }
 
-        return view('order', compact('item', 'category'));
+        return view('order', [
+            'item' => $item,
+            'produk' => $item,
+            'category' => $category,
+        ]);
     }
 
     /**
@@ -190,7 +208,7 @@ class OrderController extends Controller
         $order = Order::where('order_id', $order_id)->with(['user', 'orderable'])->firstOrFail();
 
         // Pastikan hanya user terkait yang bisa akses invoice-nya
-        if (auth()->id() !== $order->user_id && !auth()->user()->is_superadmin) {
+        if (auth()->id() !== $order->user_id && !auth()->user()->is_admin) {
             abort(403);
         }
 
@@ -236,8 +254,11 @@ class OrderController extends Controller
                 $newStatus = $transactionStatus;
         }
 
-        $order->status = $newStatus;
-        $order->save();
+        if ($oldStatus === $newStatus) {
+            return response()->json([
+                'message' => 'No status change'
+            ], 200);
+        }
 
         ActivityLog::create([
             'actor_id' => $order->user_id,
@@ -260,23 +281,74 @@ class OrderController extends Controller
 
         DB::transaction(function () use ($order, $item, $newStatus, $oldStatus) {
 
+            $order->status = $newStatus;
+            $order->save();
+
             if ($newStatus === 'success' && $oldStatus !== 'success') {
 
                 if ($item instanceof Product) {
 
-                    if ($item->stok >= $order->qty) {
-                        $item->decrement('stok', $order->qty);
+                    $remaining = $order->qty;
+
+                    $batches = $item->stocks()
+                        ->where('qty', '>', 0)
+                        ->orderBy('received_date')
+                        ->lockForUpdate()
+                        ->get();
+
+                    foreach ($batches as $batch) {
+
+                        if ($remaining <= 0)
+                            break;
+
+                        $deduct = min($batch->qty, $remaining);
+
+                        $batch->decrement('qty', $deduct);
 
                         StockMovement::create([
                             'stockable_id' => $item->id,
-                            'stockable_type' => get_class($item),
+                            'stockable_type' => Product::class,
                             'type' => 'out',
-                            'quantity' => $order->qty,
-                            'source' => 'Sale',
+                            'quantity' => $deduct,
+                            'source' => 'purchase',
                             'reference_id' => $order->id,
                             'movement_date' => now(),
                         ]);
+
+                        $remaining -= $deduct;
                     }
+
+                    if ($remaining > 0) {
+
+                        // 🔥 FALLBACK kalau tidak ada batch (supaya test lama tetap jalan)
+                        if ($item->stocks()->count() === 0) {
+
+                            if ($item->stok < $order->qty) {
+                                throw new \Exception('Stok tidak cukup');
+                            }
+
+                            $item->decrement('stok', $order->qty);
+
+                            StockMovement::create([
+                                'stockable_id' => $item->id,
+                                'stockable_type' => Product::class,
+                                'type' => 'out',
+                                'quantity' => $order->qty,
+                                'source' => 'purchase',
+                                'reference_id' => $order->id,
+                                'movement_date' => now(),
+                            ]);
+
+                            return;
+                        }
+
+                        throw new \Exception('Stok tidak cukup');
+                    }
+
+                    // optional: update cached total stok
+                    $item->update([
+                        'stok' => $item->stocks()->sum('qty')
+                    ]);
                 }
 
                 if ($item instanceof Kambing || $item instanceof Domba) {
@@ -291,14 +363,21 @@ class OrderController extends Controller
 
                 if ($item instanceof Product) {
 
-                    $item->increment('stok', $order->qty);
+                    ProductStock::create([
+                        'product_id' => $item->id,
+                        'qty' => $order->qty,
+                        'source' => 'manual_adjustment',
+                        'reference_id' => $order->id,
+                        'received_date' => now(),
+                        'price_per_unit' => null,
+                    ]);
 
                     StockMovement::create([
                         'stockable_id' => $item->id,
                         'stockable_type' => get_class($item),
                         'type' => 'in',
                         'quantity' => $order->qty,
-                        'source' => 'Payment Failed',
+                        'source' => 'purchase',
                         'reference_id' => $order->id,
                         'movement_date' => now(),
                     ]);
@@ -310,6 +389,11 @@ class OrderController extends Controller
                         'is_locked' => false
                     ]);
                 }
+
+                // optional: update cached total stok
+                $item->update([
+                    'stok' => $item->stocks()->sum('qty')
+                ]);
             }
         });
 
@@ -420,7 +504,7 @@ class OrderController extends Controller
             ->firstOrFail();
 
         // Pastikan hanya user terkait yang bisa akses
-        if (auth()->id() !== $order->user_id && !auth()->user()->is_superadmin) {
+        if (auth()->id() !== $order->user_id && !auth()->user()->is_admin) {
             abort(403);
         }
 
@@ -465,21 +549,73 @@ class OrderController extends Controller
 
             DB::transaction(function () use ($order, $item, $status, $oldStatus) {
 
+                dd([
+                    'oldStatus' => $oldStatus,
+                    'newStatus' => $status,
+                ]);
+                
                 if ($status === 'settlement' && $oldStatus !== 'settlement') {
 
                     if ($item instanceof Product) {
 
-                        if ($item->stok >= $order->qty) {
+                        // 🔥 Kalau tidak pakai FIFO (tidak ada batch sama sekali)
+                        if ($item->stocks()->sum('qty') == 0) {
+
+                            if ($item->stok < $order->qty) {
+                                throw new \Exception('Stok tidak cukup');
+                            }
+
                             $item->decrement('stok', $order->qty);
 
                             StockMovement::create([
                                 'stockable_id' => $item->id,
-                                'stockable_type' => get_class($item),
+                                'stockable_type' => Product::class,
                                 'type' => 'out',
                                 'quantity' => $order->qty,
-                                'source' => 'Sale',
+                                'source' => 'purchase',
                                 'reference_id' => $order->id,
                                 'movement_date' => now(),
+                            ]);
+
+                        } else {
+
+                            // 🔥 FIFO version
+                            $remaining = $order->qty;
+
+                            $batches = $item->stocks()
+                                ->where('qty', '>', 0)
+                                ->orderBy('received_date')
+                                ->lockForUpdate()
+                                ->get();
+
+                            foreach ($batches as $batch) {
+
+                                if ($remaining <= 0)
+                                    break;
+
+                                $deduct = min($batch->qty, $remaining);
+
+                                $batch->decrement('qty', $deduct);
+
+                                StockMovement::create([
+                                    'stockable_id' => $item->id,
+                                    'stockable_type' => Product::class,
+                                    'type' => 'out',
+                                    'quantity' => $deduct,
+                                    'source' => 'purchase',
+                                    'reference_id' => $order->id,
+                                    'movement_date' => now(),
+                                ]);
+
+                                $remaining -= $deduct;
+                            }
+
+                            if ($remaining > 0) {
+                                throw new \Exception('Stok tidak cukup');
+                            }
+
+                            $item->update([
+                                'stok' => $item->stocks()->sum('qty')
                             ]);
                         }
                     }
@@ -496,14 +632,25 @@ class OrderController extends Controller
 
                     if ($item instanceof Product) {
 
-                        $item->increment('stok', $order->qty);
+                        ProductStock::create([
+                            'product_id' => $item->id,
+                            'qty' => $order->qty,
+                            'source' => 'manual_adjustment',
+                            'reference_id' => $order->id,
+                            'received_date' => now(),
+                            'price_per_unit' => null,
+                        ]);
+
+                        $item->update([
+                            'stok' => $item->stocks()->sum('qty')
+                        ]);
 
                         StockMovement::create([
                             'stockable_id' => $item->id,
                             'stockable_type' => get_class($item),
                             'type' => 'in',
                             'quantity' => $order->qty,
-                            'source' => 'Order Cancel',
+                            'source' => 'purchase',
                             'reference_id' => $order->id,
                             'movement_date' => now(),
                         ]);
@@ -520,11 +667,8 @@ class OrderController extends Controller
 
             return response()->json(['success' => true]);
 
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
+        } catch (\Throwable $e) {
+            throw $e;
         }
     }
 
