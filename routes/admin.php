@@ -214,7 +214,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             // Order Management
             Route::post('orders/{order}/notes', [DashboardController::class, 'updateNotes'])->name('orders.notes.update');
             Route::post('orders/{order}/status', [DashboardController::class, 'updateStatus'])->name('orders.status.update');
-            Route::post('orders/{id}/status', [OrderController::class, 'updateOrderStatus'])->name('orders.update-status');
+            Route::post('orders/{id}/update-status', [OrderController::class, 'updateOrderStatus'])->name('orders.update-status');
             Route::post('orders/{id}/reactivate', [OrderController::class, 'reactivateProduct'])->name('orders.reactivate');
         });
     });

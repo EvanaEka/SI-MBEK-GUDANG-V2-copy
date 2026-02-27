@@ -197,9 +197,7 @@ class OrderController extends Controller
                 'snap_token' => $snapToken,
             ]);
         } catch (\Exception $e) {
-            return response()->json([
-                'error' => $e->getMessage(),
-            ], 500);
+            return response()->json(['error' => $e->getMessage(),], 500);
         }
     }
 
@@ -549,17 +547,14 @@ class OrderController extends Controller
 
             DB::transaction(function () use ($order, $item, $status, $oldStatus) {
 
-                dd([
-                    'oldStatus' => $oldStatus,
-                    'newStatus' => $status,
-                ]);
-                
                 if ($status === 'settlement' && $oldStatus !== 'settlement') {
 
                     if ($item instanceof Product) {
 
                         // 🔥 Kalau tidak pakai FIFO (tidak ada batch sama sekali)
-                        if ($item->stocks()->sum('qty') == 0) {
+                        $totalBatchStock = (int) $item->stocks()->sum('qty');
+
+                        if ($totalBatchStock <= 0) {
 
                             if ($item->stok < $order->qty) {
                                 throw new \Exception('Stok tidak cukup');
@@ -632,18 +627,26 @@ class OrderController extends Controller
 
                     if ($item instanceof Product) {
 
-                        ProductStock::create([
-                            'product_id' => $item->id,
-                            'qty' => $order->qty,
-                            'source' => 'manual_adjustment',
-                            'reference_id' => $order->id,
-                            'received_date' => now(),
-                            'price_per_unit' => null,
-                        ]);
+                        $totalBatchStock = (int) $item->stocks()->sum('qty');
 
-                        $item->update([
-                            'stok' => $item->stocks()->sum('qty')
-                        ]);
+                        if ($totalBatchStock <= 0) {
+                            // 🔥 Non-FIFO restore
+                            $item->increment('stok', $order->qty);
+                        } else {
+                            // 🔥 FIFO restore
+                            ProductStock::create([
+                                'product_id' => $item->id,
+                                'qty' => $order->qty,
+                                'source' => 'manual_adjustment',
+                                'reference_id' => $order->id,
+                                'received_date' => now(),
+                                'price_per_unit' => null,
+                            ]);
+
+                            $item->update([
+                                'stok' => $item->stocks()->sum('qty')
+                            ]);
+                        }
 
                         StockMovement::create([
                             'stockable_id' => $item->id,
@@ -667,8 +670,8 @@ class OrderController extends Controller
 
             return response()->json(['success' => true]);
 
-        } catch (\Throwable $e) {
-            throw $e;
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage(),], 500);
         }
     }
 
@@ -697,7 +700,7 @@ class OrderController extends Controller
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            return response()->json(['error' => $e->getMessage(),], 500);
         }
     }
 }

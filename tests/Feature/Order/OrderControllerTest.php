@@ -430,8 +430,10 @@ class OrderControllerTest extends TestCase
             'qty' => 2
         ]);
 
+        dump('STATUS SEBELUM REQUEST:', $order->status);
+
         $response = $this->actingAs($this->admin, 'admin')
-            ->postJson("/admin/orders/{$order->id}/status", [
+            ->postJson("/admin/orders/{$order->id}/update-status", [
                 'status' => 'settlement'
             ]);
 
@@ -470,13 +472,13 @@ class OrderControllerTest extends TestCase
 
         // Settlement pertama
         $this->actingAs($this->admin, 'admin')
-            ->postJson("/admin/orders/{$order->id}/status", [
+            ->postJson("/admin/orders/{$order->id}/update-status", [
                 'status' => 'settlement'
             ]);
 
         // Settlement kedua (retry / double click)
         $response = $this->actingAs($this->admin, 'admin')
-            ->postJson("/admin/orders/{$order->id}/status", [
+            ->postJson("/admin/orders/{$order->id}/update-status", [
                 'status' => 'settlement'
             ]);
 
@@ -516,7 +518,7 @@ class OrderControllerTest extends TestCase
 
         // Settlement
         $response = $this->actingAs($this->admin, 'admin')
-            ->postJson("/admin/orders/{$order->id}/status", [
+            ->postJson("/admin/orders/{$order->id}/update-status", [
                 'status' => 'settlement'
             ]);
 
@@ -525,7 +527,7 @@ class OrderControllerTest extends TestCase
 
         // Cancel
         $this->actingAs($this->admin, 'admin')
-            ->postJson("/admin/orders/{$order->id}/status", [
+            ->postJson("/admin/orders/{$order->id}/update-status", [
                 'status' => 'cancel'
             ]);
 
@@ -534,7 +536,7 @@ class OrderControllerTest extends TestCase
         $this->assertEquals(15, $product->stok);
 
         $this->assertDatabaseHas('stock_movements', [
-            'reference_id' => 47,
+            'reference_id' => $order->id,
             'type' => 'in'
         ]);
     }
