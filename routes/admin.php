@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\PenjualanController;
 use App\Http\Controllers\Admin\PurchaseOrderController;
 use App\Http\Controllers\Admin\MaterialInventoryController;
 use App\Http\Controllers\WarehouseDashboardController;
+use App\Http\Controllers\Admin\FormulaController;
 use App\Http\Controllers\Admin\ProductionController;
 use App\Http\Controllers\Admin\ProductInventoryController;
 use App\Http\Controllers\Admin\ProductAllocationController;
@@ -98,6 +99,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
                 'inventory/material/{material}/sync',
                 [MaterialInventoryController::class, 'sync']
             )->name('inventory.material.sync');
+
+            //Formula
+            Route::resource('formula', FormulaController::class)
+                ->except(['show']);
 
             //Production
             Route::post('/productions', [ProductionController::class, 'store'])
