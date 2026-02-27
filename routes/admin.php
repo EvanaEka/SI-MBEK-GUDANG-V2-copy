@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\ProductInventoryController;
 use App\Http\Controllers\Admin\ProductAllocationController;
 use App\Http\Controllers\Admin\ProductionQcController;
 use App\Http\Controllers\Admin\DisposalController;
+use App\Http\Controllers\Admin\ReportController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->name('admin.')->group(function () {
@@ -152,6 +153,24 @@ Route::prefix('admin')->name('admin.')->group(function () {
             //Disposal
             Route::post('/disposal/material/{stock}', [DisposalController::class, 'disposeMaterial']);
             Route::post('/disposal/production/{production}', [DisposalController::class, 'disposeProduction']);
+
+            //Laporan
+            Route::prefix('report')
+                ->name('report.')
+                ->group(function () {
+
+                    Route::get('/stock', [ReportController::class, 'stock'])
+                        ->name('stock');
+
+                    Route::get('/production', [ReportController::class, 'production'])
+                        ->name('production');
+
+                    Route::get('/disposal', [ReportController::class, 'disposal'])
+                        ->name('disposal');
+
+                    Route::get('/monthly', [ReportController::class, 'monthly'])
+                        ->name('monthly');
+                });
 
             //Warehouse
             Route::get('/warehouse', [WarehouseDashboardController::class, 'index'])->name('warehouse.dashboard');
