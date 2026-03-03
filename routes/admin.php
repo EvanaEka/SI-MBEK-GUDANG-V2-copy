@@ -13,10 +13,12 @@ use App\Http\Controllers\Order\OrderController;
 use App\Http\Controllers\Admin\PenjualanController;
 use App\Http\Controllers\Admin\PurchaseOrderController;
 use App\Http\Controllers\Admin\MaterialInventoryController;
+use App\Http\Controllers\Admin\MaterialController;
 use App\Http\Controllers\WarehouseDashboardController;
 use App\Http\Controllers\Admin\FormulaController;
 use App\Http\Controllers\Admin\ProductionController;
 use App\Http\Controllers\Admin\ProductInventoryController;
+use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ProductAllocationController;
 use App\Http\Controllers\Admin\ProductionQcController;
 use App\Http\Controllers\Admin\DisposalController;
@@ -100,6 +102,21 @@ Route::prefix('admin')->name('admin.')->group(function () {
                 'inventory/material/{material}/sync',
                 [MaterialInventoryController::class, 'sync']
             )->name('inventory.material.sync');
+
+            //Material Master
+            Route::get('/materials', [MaterialController::class, 'index']);
+            Route::post('/materials', [MaterialController::class, 'store']);
+            Route::get('/materials/{material}', [MaterialController::class, 'show']);
+            Route::put('/materials/{material}', [MaterialController::class, 'update']);
+            Route::delete('/materials/{material}', [MaterialController::class, 'destroy']);
+
+
+            //Product Master
+            Route::get('/products', [ProductController::class, 'index']);
+            Route::post('/products', [ProductController::class, 'store']);
+            Route::get('/products/{product}', [ProductController::class, 'show']);
+            Route::put('/products/{product}', [ProductController::class, 'update']);
+            Route::delete('/products/{product}', [ProductController::class, 'destroy']);
 
             //Formula
             Route::resource('formula', FormulaController::class)

@@ -15,6 +15,7 @@ class Product extends Model
         //harga jual
         'harga',
         'stok',
+        'rop',
         'formula_id',
         'type',
         'source',

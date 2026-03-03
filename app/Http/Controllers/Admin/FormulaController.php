@@ -28,7 +28,7 @@ class FormulaController extends Controller
      */
     public function create()
     {
-        $materials = Material::where('is_active', true)->get();
+        $materials = Material::all();
 
         return view('admin.formula.create', compact('materials'));
     }
@@ -95,7 +95,7 @@ class FormulaController extends Controller
     public function edit(Formula $formula)
     {
         $formula->load('materials');
-        $materials = Material::where('is_active', true)->get();
+        $materials = Material::all();
 
         return view('admin.formula.edit', compact('formula', 'materials'));
     }
