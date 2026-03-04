@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\Auth\AdminResetPasswordController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DombaController;
 use App\Http\Controllers\Admin\KambingController;
+use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\SiteSettingsController;
 use App\Http\Controllers\Admin\AdminManagementController;
@@ -60,6 +61,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // PROTECTED ROUTES (dengan must.change.password)
         // ============================================
         Route::middleware('must.change.password')->group(function () {
+
+            //Supplier
+            Route::resource('suppliers', SupplierController::class);
 
             // Order Bahan Baku
             Route::prefix('purchase-orders')
