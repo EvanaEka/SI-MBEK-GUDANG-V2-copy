@@ -108,19 +108,24 @@ Route::prefix('admin')->name('admin.')->group(function () {
             )->name('inventory.material.sync');
 
             //Material Master
-            Route::get('/materials', [MaterialController::class, 'index']);
-            Route::post('/materials', [MaterialController::class, 'store']);
-            Route::get('/materials/{material}', [MaterialController::class, 'show']);
-            Route::put('/materials/{material}', [MaterialController::class, 'update']);
-            Route::delete('/materials/{material}', [MaterialController::class, 'destroy']);
+Route::get('/materials', [MaterialController::class, 'index'])->name('materials.index');
+Route::get('/materials/create', [MaterialController::class, 'create'])->name('materials.create'); // Tambahkan baris ini
+Route::post('/materials', [MaterialController::class, 'store'])->name('materials.store');
+Route::get('/materials/{material}', [MaterialController::class, 'show'])->name('materials.show');
+Route::put('/materials/{material}', [MaterialController::class, 'update'])->name('materials.update');
+Route::delete('/materials/{material}', [MaterialController::class, 'destroy'])->name('materials.destroy');
 
+//Product Master
+Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+Route::get('/products/create', [ProductController::class, 'create'])->name('products.create'); // Tambahkan baris ini
+Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
+Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
+Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 
-            //Product Master
-            Route::get('/products', [ProductController::class, 'index']);
-            Route::post('/products', [ProductController::class, 'store']);
-            Route::get('/products/{product}', [ProductController::class, 'show']);
-            Route::put('/products/{product}', [ProductController::class, 'update']);
-            Route::delete('/products/{product}', [ProductController::class, 'destroy']);
+             Route::get('/productions', [ProductionController::class, 'index'])->name('productions.index');
+Route::get('/productions/create', [ProductionController::class, 'create'])->name('productions.create');
+Route::get('/productions/{production}', [ProductionController::class, 'show'])->name('productions.show');
 
             //Formula
             Route::resource('formula', FormulaController::class)
@@ -156,11 +161,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
             )->name('qc.store');
 
             //Product Inventory
-            Route::resource(
-                'inventory/product',
-                ProductInventoryController::class
-            )->only(['index', 'show']);
-
+           // Product Inventory (Gunakan ->names() untuk menghindari bentrok dengan Master Data)
+Route::resource('inventory/product', ProductInventoryController::class)
+    ->names([
+        'index' => 'inventory.product.index',
+        'show' => 'inventory.product.show',
+    ])
+    ->only(['index', 'show']);
+    
             Route::post(
                 'inventory/product/{product}/sync',
                 [ProductInventoryController::class, 'sync']
@@ -170,6 +178,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
                 'inventory/product/{product}/adjust',
                 [ProductInventoryController::class, 'adjust']
             )->name('inventory.product.adjust');
+
+            Route::post(
+    '/products/{product}/allocations/set',
+    [ProductAllocationController::class, 'storeOrUpdate']
+)->name('product.allocations.set');
+
+Route::post('inventory/product/{product}/update-rop', [ProductInventoryController::class, 'updateRop'])
+    ->name('inventory.product.update-rop');
 
             //Disposal
             Route::post('/disposal/material/{stock}', [DisposalController::class, 'disposeMaterial']);

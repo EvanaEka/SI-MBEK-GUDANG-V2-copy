@@ -10,7 +10,7 @@
                 </svg>
             </a>
             <div>
-                <h1 class="text-2xl font-bold text-gray-800">Buat Purchase Order</h1>
+                <h1 class="text-2xl font-bold text-gray-800">Buat Pemesanan Bahan</h1>
                 <p class="text-sm text-gray-500 mt-0.5">Isi detail pemesanan bahan baku atau produk</p>
             </div>
         </div>
@@ -72,18 +72,17 @@
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition">
                         </div>
 
-                        {{-- Dipesan Oleh --}}
-                        @if(auth()->guard('owner')->check())
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Atas Nama</label>
-                            <div class="flex gap-3">
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="dipesan_oleh_type" value="Admin" class="text-orange-500" checked>
-                                    <span class="text-sm text-gray-700">Owner (Saya)</span>
-                                </label>
-                        </div>
-                        @endif
-                    </div>
+<div class="col-span-1 sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-5">
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Dipesan Atas Nama <span class="text-red-500">*</span></label>
+        <div class="flex gap-4 p-2.5 bg-gray-50 rounded-lg border border-gray-200">
+            <label class="flex items-center gap-2 cursor-pointer group">
+                <input type="radio" name="dipesan_oleh_type" value="Owner" class="text-orange-500 focus:ring-orange-400" checked onchange="toggleOwnerSelect(false)">
+                <span class="text-sm text-gray-700 group-hover:text-gray-900">Owner (Saya)</span>
+            </label>
+        </div>
+    </div>
+</div>
 
                     {{-- Catatan --}}
                     <div class="mt-5">
@@ -124,7 +123,7 @@
 
                 {{-- Actions --}}
                 <div class="flex items-center justify-end gap-3">
-                    <a href="{{ route('owner.purchase-orders.index') }}"
+                    <a href="{{ route('admin.purchase-orders.index') }}"
                         class="px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                         Batal
                     </a>
@@ -142,12 +141,17 @@
     <script>
         // ─── Data ───────────────────────────────────────────
         const materials = @json($materials->map(fn($m) => ['id' => $m->id, 'nama' => $m->nama_bahan, 'satuan' => $m->satuan]));
+        const products = @json($products ?? []) ;
 
         // ─── Item counter ────────────────────────────────────
         let itemIndex = 0;
 
-        // ─── Add Item Button ─────────────────────────────────
-        document.getElementById('add-item').addEventListener('click', () => addItem());
+        document.getElementById('po-type').addEventListener('change', function() {
+    // Kosongkan item jika tipe PO diganti
+    document.getElementById('items-container').innerHTML = '';
+    itemIndex = 0;
+    addItem(); // Tambah satu baris kosong baru
+});
 
         // ─── Owner radio toggle ──────────────────────────────
         document.querySelectorAll('input[name="dipesan_oleh_type"]').forEach(radio => {
@@ -158,57 +162,71 @@
         });
 
         // ─── Add first item on load ──────────────────────────
-        addItem();
 
-        function addItem() {
-            const container = document.getElementById('items-container');
-            const idx = itemIndex++;
+       function addItem() {
+    const container = document.getElementById('items-container');
+    const poType = document.getElementById('po-type').value;
 
-            const materialOptions = materials.map(m =>
-                `<option value="${m.id}">${m.nama} (${m.satuan})</option>`
-            ).join('');
+    if (!poType) {
+        alert('Silakan pilih Tipe PO terlebih dahulu');
+        return;
+    }
 
-            const row = document.createElement('div');
-            row.className = 'item-row grid grid-cols-12 gap-3 items-start bg-gray-50 rounded-lg p-4 border border-gray-200';
-            row.dataset.index = idx;
-            row.innerHTML = `
-                <div class="col-span-12 sm:col-span-5">
-                    <label class="block text-xs font-medium text-gray-500 mb-1">Bahan / Material</label>
-                    <select name="items[${idx}][material_id]" required onchange="updateSatuan(this, ${idx})"
-                        class="w-full border border-gray-300 bg-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent">
-                        <option value="">-- Pilih Material --</option>
-                        ${materialOptions}
-                    </select>
-                </div>
-                <div class="col-span-4 sm:col-span-2">
-                    <label class="block text-xs font-medium text-gray-500 mb-1">Jumlah</label>
-                    <input type="number" name="items[${idx}][jumlah]" min="1" placeholder="0" required
-                        oninput="calcRow(${idx})"
-                        class="w-full border border-gray-300 bg-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent">
-                </div>
-                <div class="col-span-8 sm:col-span-4">
-                    <label class="block text-xs font-medium text-gray-500 mb-1">Harga Satuan (Rp)</label>
-                    <input type="number" name="items[${idx}][harga_satuan]" min="0" placeholder="0" required
-                        oninput="calcRow(${idx})"
-                        class="w-full border border-gray-300 bg-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent">
-                </div>
-                <div class="col-span-12 sm:col-span-1 flex sm:flex-col items-end gap-2 sm:pt-5">
-                    <button type="button" onclick="removeItem(this)" 
-                        class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Hapus">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                        </svg>
-                    </button>
-                </div>
-                <div class="col-span-12">
-                    <div class="flex items-center justify-between text-xs text-gray-400">
-                        <span id="satuan-label-${idx}"></span>
-                        <span>Subtotal: <strong class="text-gray-700" id="subtotal-${idx}">Rp 0</strong></span>
-                    </div>
-                </div>
-            `;
-            container.appendChild(row);
-        }
+    const idx = itemIndex++;
+    const row = document.createElement('div');
+    row.className = 'item-row grid grid-cols-12 gap-3 items-start bg-gray-50 rounded-lg p-4 border border-gray-200';
+    row.dataset.index = idx;
+
+    // Logika pemilihan list
+    let options = '';
+    let selectName = '';
+    
+    if (poType === 'material') {
+        selectName = `items[${idx}][material_id]`;
+        options = `<option value="">-- Pilih Material --</option>` + 
+                  materials.map(m => `<option value="${m.id}">${m.nama} (${m.satuan})</option>`).join('');
+    } else {
+        selectName = `items[${idx}][product_id]`;
+        options = `<option value="">-- Pilih Obat --</option>` + 
+                  products.map(p => `<option value="${p.id}">${p.nama}</option>`).join('');
+    }
+
+    row.innerHTML = `
+        <div class="col-span-12 sm:col-span-5">
+            <label class="block text-xs font-medium text-gray-500 mb-1">
+                ${poType === 'material' ? 'Bahan / Material' : 'Produk Obat'}
+            </label>
+            <select name="${selectName}" required onchange="updateSatuan(this, ${idx})"
+                class="w-full border border-gray-300 bg-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent">
+                ${options}
+            </select>
+        </div>
+        <div class="col-span-4 sm:col-span-2">
+            <label class="block text-xs font-medium text-gray-500 mb-1">Jumlah</label>
+            <input type="number" name="items[${idx}][jumlah]" min="1" placeholder="0" required
+                oninput="calcRow(${idx})"
+                class="w-full border border-gray-300 bg-white rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div class="col-span-8 sm:col-span-4">
+            <label class="block text-xs font-medium text-gray-500 mb-1">Harga Satuan (Rp)</label>
+            <input type="number" name="items[${idx}][harga_satuan]" min="0" placeholder="0" required
+                oninput="calcRow(${idx})"
+                class="w-full border border-gray-300 bg-white rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div class="col-span-12 sm:col-span-1 flex items-end sm:pt-5">
+            <button type="button" onclick="removeItem(this)" class="p-2 text-gray-400 hover:text-red-500">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+        </div>
+        <div class="col-span-12">
+            <div class="flex items-center justify-between text-xs text-gray-400">
+                <span id="satuan-label-${idx}"></span>
+                <span>Subtotal: <strong class="text-gray-700" id="subtotal-${idx}">Rp 0</strong></span>
+            </div>
+        </div>
+    `;
+    container.appendChild(row);
+}
 
         function removeItem(btn) {
             const rows = document.querySelectorAll('.item-row');
@@ -221,10 +239,18 @@
         }
 
         function updateSatuan(select, idx) {
-            const mat = materials.find(m => m.id == select.value);
-            const label = document.getElementById(`satuan-label-${idx}`);
-            if (label) label.textContent = mat ? `Satuan: ${mat.satuan}` : '';
-        }
+    const poType = document.getElementById('po-type').value;
+    const label = document.getElementById(`satuan-label-${idx}`);
+    
+    if (poType === 'material') {
+        const mat = materials.find(m => m.id == select.value);
+        if (label) label.textContent = mat ? `Satuan: ${mat.satuan}` : '';
+    } else {
+        // Jika produk obat tidak punya satuan di tabel, bisa dikosongkan atau ambil dari data produk
+        const prod = products.find(p => p.id == select.value);
+        if (label) label.textContent = prod ? `Tipe: ${prod.type}` : '';
+    }
+}
 
         function calcRow(idx) {
             const row = document.querySelector(`[data-index="${idx}"]`);
@@ -257,4 +283,4 @@
         });
     </script>
     @endpush
-</x-owner-app-layout>
+</x-admin-app-layout>

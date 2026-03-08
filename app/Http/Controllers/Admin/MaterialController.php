@@ -16,7 +16,7 @@ class MaterialController extends Controller
     {
         $materials = Material::orderBy('nama_bahan')->get();
 
-        return response()->json($materials);
+        return view('admin.material.index', compact('materials'));
     }
 
     /**
@@ -45,11 +45,8 @@ class MaterialController extends Controller
             'deskripsi' => $request->deskripsi,
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Material berhasil ditambahkan',
-            'data' => $material
-        ]);
+        return view('admin.material.create');
+       
     }
 
     /**
@@ -57,7 +54,7 @@ class MaterialController extends Controller
      */
     public function show(Material $material)
     {
-        return response()->json($material);
+        return view('admin.material.show', compact('material'));
     }
 
     /**
@@ -85,11 +82,8 @@ class MaterialController extends Controller
             'deskripsi' => $request->deskripsi,
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Material berhasil diperbarui',
-            'data' => $material
-        ]);
+        return redirect()->route('admin.materials.index')
+            ->with('success', 'Material berhasil diperbarui');
     }
 
     /**
@@ -99,17 +93,17 @@ class MaterialController extends Controller
     {
         // Cegah hapus jika masih ada stok
         if ($material->stok > 0) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Material tidak bisa dihapus karena masih memiliki stok'
-            ], 422);
+           return redirect()->back()->with('error', 'Material tidak bisa dihapus karena masih memiliki stok');
         }
 
         $material->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Material berhasil dihapus'
-        ]);
+       return redirect()->route('admin.materials.index')
+            ->with('success', 'Material berhasil dihapus');
     }
+    public function create()
+{
+    return view('admin.material.create');
+}
+
 }

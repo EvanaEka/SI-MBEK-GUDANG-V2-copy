@@ -16,28 +16,41 @@ class ProductInventoryController extends Controller
      */
     public function index()
     {
-        $products = Product::withSum('stocks', 'qty')
-            ->orderBy('nama')
-            ->get();
+        $products = Product::with(['allocations', 'stocks']) 
+        ->withSum('stocks', 'qty')
+        ->orderBy('nama')
+        ->get();
 
-        return response()->json($products);
+        return view('admin.inventory.product.index', compact('products'));
     }
 
     /**
      * 📋 Detail batch per produk
      */
     public function show(Product $product)
-    {
-        $batches = $product->stocks()
-            ->where('qty', '>', 0)
-            ->orderBy('received_date', 'asc')
-            ->get();
+{
+    // 1. Ambil data batch yang masih memiliki stok
+    $batches = $product->stocks()
+        ->where('qty', '>', 0)
+        ->orderBy('received_date', 'asc')
+        ->get();
 
-        return response()->json([
-            'product' => $product,
-            'batches' => $batches
-        ]);
-    }
+    // 2. Ambil riwayat pergerakan stok (Movements)
+    $movements = $product->stockMovements() // Pastikan relasi stockMovements ada di Model Product
+        ->orderBy('movement_date', 'desc')
+        ->latest()
+        ->get();
+
+    // 3. Ambil data alokasi produk
+    $allocations = $product->allocations; // Ambil relasi alokasi
+
+    return view('admin.inventory.product.show', compact(
+        'product',
+        'batches',
+        'movements',
+        'allocations'
+    ));
+}
 
     /**
      * 🔄 Sync summary stok dengan total batch
@@ -64,6 +77,7 @@ class ProductInventoryController extends Controller
         $request->validate([
             'qty' => 'required|integer|min:1',
             'type' => 'required|in:in,out',
+            'expired_date' => 'nullable|date', // Tambahkan validasi date
             'reason' => 'nullable|string'
         ]);
 
@@ -77,7 +91,7 @@ class ProductInventoryController extends Controller
                     'source' => 'manual_adjustment',
                     'reference_id' => null,
                     'received_date' => now(),
-                    'expired_date' => null,
+                    'expired_date' => $request->expired_date,
                     'created_by' => auth('admin')->id(), // 🔥 penting
                 ]);
 
@@ -124,10 +138,25 @@ class ProductInventoryController extends Controller
                 'source' => 'manual_adjustment',
                 'reference_id' => null,
                 'movement_date' => now(),
+                'catatan'        => $request->reason,
                 'created_by' => auth('admin')->id(), // 🔥 penting
             ]);
         });
 
         return redirect()->back()->with('success', 'Stok berhasil disesuaikan');
     }
+
+    public function updateRop(Request $request, Product $product)
+{
+    $request->validate([
+        'rop' => 'required|integer|min:0'
+    ]);
+
+    $product->update([
+        'rop' => $request->rop
+    ]);
+
+    return redirect()->back()->with('success', 'Reorder Point (ROP) berhasil diperbarui');
+}
+    
 }

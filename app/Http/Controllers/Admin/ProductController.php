@@ -18,8 +18,9 @@ class ProductController extends Controller
             ->orderBy('nama')
             ->get();
 
-        return response()->json($products);
+        return view('admin.product.index', compact('products'));
     }
+    
 
     /**
      * ➕ Tambah produk baru
@@ -38,10 +39,7 @@ class ProductController extends Controller
 
         // Jika source produksi → wajib ada formula
         if ($request->source === 'produksi' && !$request->formula_id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Produk dengan source produksi wajib memiliki formula'
-            ], 422);
+           return redirect()->back()->withInput()->with('error', 'Produk produksi wajib memiliki formula');
         }
 
         $product = Product::create([
@@ -56,11 +54,8 @@ class ProductController extends Controller
             'created_by' => auth('admin')->id(),
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Produk berhasil ditambahkan',
-            'data' => $product
-        ]);
+       return redirect()->route('admin.products.index')
+            ->with('success', 'Produk berhasil ditambahkan');
     }
 
     /**
@@ -69,8 +64,8 @@ class ProductController extends Controller
     public function show(Product $product)
     {
         $product->load('formula');
-
-        return response()->json($product);
+        $formulas = \App\Models\Formula::all(); // Dibutuhkan untuk dropdown saat mode edit di halaman show
+        return view('admin.product.show', compact('product', 'formulas'));
     }
 
     /**
@@ -89,10 +84,7 @@ class ProductController extends Controller
         ]);
 
         if ($request->source === 'produksi' && !$request->formula_id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Produk produksi wajib memiliki formula'
-            ], 422);
+           return redirect()->back()->with('error', 'Produk produksi wajib memiliki formula');
         }
 
         $product->update([
@@ -105,11 +97,7 @@ class ProductController extends Controller
             'source' => $request->source,
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Produk berhasil diperbarui',
-            'data' => $product
-        ]);
+       return redirect()->route('admin.products.index')->with('success', 'Produk berhasil diperbarui');
     }
 
     /**
@@ -118,17 +106,20 @@ class ProductController extends Controller
     public function destroy(Product $product)
     {
         if ($product->stok > 0) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Produk tidak bisa dihapus karena masih memiliki stok'
-            ], 422);
+           return redirect()->back()->with('error', 'Produk tidak bisa dihapus karena masih memiliki stok');
         }
 
         $product->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Produk berhasil dihapus'
-        ]);
+        return redirect()->route('admin.products.index')->with('success', 'Produk berhasil dihapus');
     }
+  public function create()
+{
+    // Mengambil data resep dari database
+   $formulas = Formula::orderBy('nama_formula')->get();
+    
+    // Mengirim ke view agar dropdown ada isinya
+    return view('admin.product.create', compact('formulas'));
+}
+
 }

@@ -86,4 +86,8 @@ class SupplierController extends Controller
             ->route('admin.suppliers.index')
             ->with('success', 'Supplier berhasil dihapus');
     }
+    public function show(Supplier $supplier)
+{
+    return view('admin.suppliers.show', compact('supplier'));
+}
 }

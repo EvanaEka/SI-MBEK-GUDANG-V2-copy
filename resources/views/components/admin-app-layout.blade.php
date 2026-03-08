@@ -304,6 +304,28 @@
                                                 Domba
                                             </x-responsive-nav-link>
                                         </li>
+                                         <li>
+                                            <x-responsive-nav-link href="{{ route('admin.materials.create') }}"
+                                                class="{{ request()->routeIs('admin.materials.create') ? 'block w-full ps-3 pe-4 py-2 border-indigo-400 text-start text-base font-medium text-orange-700 bg-orange-50 focus:outline-none focus:text-orange-800 focus:bg-orange-100 focus:border-orange-700 transition duration-150 ease-in-out' : 'block w-full ps-3 pe-4 py-2 border-transparent text-start text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:text-gray-800 focus:bg-gray-50 focus:border-gray-300 transition duration-150 ease-in-out' }}"
+                                                @click="if (!{{ request()->routeIs('admin.materials.create') }}) { open = false; }">
+                                                Material
+                                            </x-responsive-nav-link>
+                                        </li>
+                                         <li>
+                                            <x-responsive-nav-link href="{{ route('admin.products.create') }}"
+                                                class="{{ request()->routeIs('admin.products.create') ? 'block w-full ps-3 pe-4 py-2 border-indigo-400 text-start text-base font-medium text-orange-700 bg-orange-50 focus:outline-none focus:text-orange-800 focus:bg-orange-100 focus:border-orange-700 transition duration-150 ease-in-out' : 'block w-full ps-3 pe-4 py-2 border-transparent text-start text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:text-gray-800 focus:bg-gray-50 focus:border-gray-300 transition duration-150 ease-in-out' }}"
+                                                @click="if (!{{ request()->routeIs('admin.products.create') }}) { open = false; }">
+                                                Produk
+                                            </x-responsive-nav-link>
+                                        </li>
+                                        <li>
+                                            <x-responsive-nav-link href="{{ route('admin.suppliers.create') }}"
+                                                class="{{ request()->routeIs('admin.suppliers.create') ? 'block w-full ps-3 pe-4 py-2 border-indigo-400 text-start text-base font-medium text-orange-700 bg-orange-50 focus:outline-none focus:text-orange-800 focus:bg-orange-100 focus:border-orange-700 transition duration-150 ease-in-out' : 'block w-full ps-3 pe-4 py-2 border-transparent text-start text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:text-gray-800 focus:bg-gray-50 focus:border-gray-300 transition duration-150 ease-in-out' }}"
+                                                @click="if (!{{ request()->routeIs('admin.suppliers.create') }}) { open = false; }">
+                                                Supplier
+                                            </x-responsive-nav-link>
+                                        </li>
+  
                                     </ul>
                                 </li>
 
@@ -322,7 +344,7 @@
                                                         d="M.54 3.87.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.826a2 2 0 0 1-1.991-1.819l-.637-7a2 2 0 0 1 .342-1.31zM2.19 4a1 1 0 0 0-.996 1.09l.637 7a1 1 0 0 0 .995.91h10.348a1 1 0 0 0 .995-.91l.637-7A1 1 0 0 0 13.81 4zm4.69-1.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139q.323-.119.684-.12h5.396z" />
                                                 </svg>
                                             </span>
-                                            <span class="ml-2 group-hover:text-gray-800">Produk</span>
+                                            <span class="ml-2 group-hover:text-gray-800">Master Data</span>
                                         </span>
                                         <svg class="w-4 h-4 text-gray-500 transition-transform duration-200 transform"
                                             :class="{ 'rotate-180': open }" fill="none" stroke="currentColor"
@@ -348,6 +370,28 @@
                                                 Domba
                                             </x-responsive-nav-link>
                                         </li>
+                                         <li>
+                                            <x-responsive-nav-link href="{{ route('admin.materials.index') }}"
+                                                class="{{ request()->routeIs('admin.materials.index') ? 'block w-full ps-3 pe-4 py-2 border-indigo-400 text-start text-base font-medium text-orange-700 bg-orange-50 focus:outline-none focus:text-orange-800 focus:bg-orange-100 focus:border-orange-700 transition duration-150 ease-in-out' : 'block w-full ps-3 pe-4 py-2 border-transparent text-start text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:text-gray-800 focus:bg-gray-50 focus:border-gray-300 transition duration-150 ease-in-out' }}"
+                                                @click="if (!{{ request()->routeIs('admin.materials.index') }}) { open = false; }">
+                                                Material
+                                            </x-responsive-nav-link>
+                                        </li>
+                                         <li>
+                                            <x-responsive-nav-link href="{{ route('admin.products.index') }}"
+                                                class="{{ request()->routeIs('admin.products.index') ? 'block w-full ps-3 pe-4 py-2 border-indigo-400 text-start text-base font-medium text-orange-700 bg-orange-50 focus:outline-none focus:text-orange-800 focus:bg-orange-100 focus:border-orange-700 transition duration-150 ease-in-out' : 'block w-full ps-3 pe-4 py-2 border-transparent text-start text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:text-gray-800 focus:bg-gray-50 focus:border-gray-300 transition duration-150 ease-in-out' }}"
+                                                @click="if (!{{ request()->routeIs('admin.products.index') }}) { open = false; }">
+                                                Produk
+                                            </x-responsive-nav-link>
+                                        </li>
+                                         <li>
+                                            <x-responsive-nav-link href="{{ route('admin.suppliers.index') }}"
+                                                class="{{ request()->routeIs('admin.suppliers.index') ? 'block w-full ps-3 pe-4 py-2 border-indigo-400 text-start text-base font-medium text-orange-700 bg-orange-50 focus:outline-none focus:text-orange-800 focus:bg-orange-100 focus:border-orange-700 transition duration-150 ease-in-out' : 'block w-full ps-3 pe-4 py-2 border-transparent text-start text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:text-gray-800 focus:bg-gray-50 focus:border-gray-300 transition duration-150 ease-in-out' }}"
+                                                @click="if (!{{ request()->routeIs('admin.suppliers.index') }}) { open = false; }">
+                                                Supplier
+                                            </x-responsive-nav-link>
+                                        </li>
+
                                     </ul>
                                 </li>
 
@@ -409,8 +453,76 @@
         <x-responsive-nav-link 
             :href="route('admin.purchase-orders.index')" 
             :active="request()->routeIs('admin.purchase-orders.*')">
-            {{ __('Purchase Order') }}
+            {{ __('Pemesanan Bahan') }}
         </x-responsive-nav-link>
+    </a>
+</li>
+
+{{-- Menu Inventori Bahan --}}
+<li class="flex">
+    <a href="{{ route('admin.material.index') }}"
+        class="text-base text-gray-900 font-normal rounded-lg flex items-center p-2 hover:bg-gray-100 group w-full {{ request()->routeIs('admin.material.*') ? 'bg-gray-100' : '' }}">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" 
+            class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75" 
+            fill="currentColor" 
+            viewBox="0 0 16 16">
+            <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2zm3.564 1.426L5.596 5 8 5.961 14.154 3.5zm.325 1.483L5.15 6.443v4.385L12.075 8.31V4.022zM4.15 6.443 1.075 5.212v3.098l2.903 1.162zm.174 5.376 3.162 1.265a.5.5 0 0 0 .372 0L11 11.819V9.567L8.186 10.693a.5.5 0 0 1-.372 0L4.324 9.567zM1.075 9.424v3.098l2.903-1.162V8.262z"/>
+        </svg>
+
+        <span class="ml-3 flex-1 whitespace-nowrap">{{ __('Inventori Bahan') }}</span>
+    </a>
+</li>
+
+{{-- Menu Resep Produksi (Formula) --}}
+<li class="flex">
+    <a href="{{ route('admin.formula.index') }}"
+        class="text-base text-gray-900 font-normal rounded-lg flex items-center p-2 hover:bg-gray-100 group w-full {{ request()->routeIs('admin.formula.*') ? 'bg-gray-100' : '' }}">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" 
+            class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75" 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            stroke="currentColor" 
+            stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+
+        <span class="ml-3 flex-1 whitespace-nowrap">{{ __('Resep Produksi') }}</span>
+    </a>
+</li>
+
+{{-- Menu Proses Produksi --}}
+<li class="flex">
+    <a href="{{ route('admin.productions.index') }}"
+        class="text-base text-gray-900 font-normal rounded-lg flex items-center p-2 hover:bg-gray-100 group w-full {{ request()->routeIs('admin.productions.*') ? 'bg-gray-100' : '' }}">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" 
+            class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75" 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            stroke="currentColor" 
+            stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 01-.586 1.414l-5 5c-.126.126-.269.246-.426.353" />
+        </svg>
+
+        <span class="ml-3 flex-1 whitespace-nowrap">{{ __('Proses Produksi') }}</span>
+    </a>
+</li>
+
+{{-- Menu Inventori Produksi (Produk Jadi) --}}
+<li class="flex">
+    <a href="{{ route('admin.inventory.product.index') }}"
+        class="text-base text-gray-900 font-normal rounded-lg flex items-center p-2 hover:bg-gray-100 group w-full {{ request()->routeIs('admin.inventory.product.*') ? 'bg-gray-100' : '' }}">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" 
+            class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75" 
+            fill="currentColor" 
+            viewBox="0 0 16 16">
+            <path d="M7.752.066a.5.5 0 0 1 .496 0l3.75 2.143a.5.5 0 0 1 .252.434v3.995l3.498 2a.5.5 0 0 1 .252.434v3.995a.5.5 0 0 1-.252.434l-3.75 2.143a.5.5 0 0 1-.496 0l-3.502-2-3.502 2a.5.5 0 0 1-.496 0l-3.75-2.143A.5.5 0 0 1 0 13.067V9.072a.5.5 0 0 1 .252-.434l3.498-2V2.643a.5.5 0 0 1 .252-.434L7.752.066ZM4.25 12.13V7.137L1.5 8.708v3.422l2.75 1.571Zm.5 1.714 2.75-1.571V7.273l-2.75 1.571v4.999Zm3.25-1.571 2.75 1.571V8.995L8 7.424v4.999ZM11.25 7.137l2.75 1.571V5.286L11.25 3.715v3.422ZM8 1.424l-2.75 1.571v3.422L8 4.846l2.75 1.571V2.995L8 1.424Z"/>
+        </svg>
+
+        <span class="ml-3 flex-1 whitespace-nowrap">{{ __('Inventori Produk') }}</span>
     </a>
 </li>
 

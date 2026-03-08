@@ -18,7 +18,7 @@ class MaterialInventoryController extends Controller
     {
         $materials = Material::orderBy('nama_bahan')->get();
 
-        return response()->json($materials);
+       return view('admin.inventory.material.index', compact('materials'));
     }
 
     /**
@@ -34,11 +34,7 @@ class MaterialInventoryController extends Controller
             ->latest()
             ->get();
 
-        return response()->json([
-            'material' => $material,
-            'batches' => $batches,
-            'movements' => $movements
-        ]);
+       return view('admin.inventory.material.show', compact('material', 'batches', 'movements'));
     }
 
     /**
@@ -108,14 +104,12 @@ class MaterialInventoryController extends Controller
                 'quantity' => $request->quantity,
                 'source' => 'adjustment',
                 'movement_date' => now(),
+                'catatan'        => $request->note,
                 'created_by' => auth('admin')->id(),
             ]);
         });
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Stok berhasil disesuaikan'
-        ]);
+       return redirect()->back()->with('success', 'Stok berhasil disesuaikan');
     }
 
     /**
@@ -126,9 +120,6 @@ class MaterialInventoryController extends Controller
         $material->stok = $material->materialStocks()->sum('qty');
         $material->save();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Stok berhasil disinkronisasi'
-        ]);
+       return redirect()->back()->with('success', 'Stok berhasil disinkronisasi');
     }
 }

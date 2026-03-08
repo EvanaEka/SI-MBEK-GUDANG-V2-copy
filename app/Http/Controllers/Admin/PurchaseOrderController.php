@@ -39,8 +39,9 @@ class PurchaseOrderController extends Controller
     {
         $suppliers = Supplier::all();
         $materials = Material::all();
+        $products = Product::where('type', 'obat')->get();
 
-        return view('admin.purchase-orders.create', compact('suppliers', 'materials'));
+        return view('admin.purchase-orders.create', compact('suppliers', 'materials', 'products'));
     }
 
     /**

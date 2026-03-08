@@ -194,78 +194,67 @@
             </div>
 
             {{-- Receive Form (Admin only, status dipesan) --}}
-            @if(auth()->guard('admin')->check() && $po->status === 'dipesan')
-                <div class="bg-white rounded-xl border border-blue-200 shadow-sm overflow-hidden">
-                    <div class="px-5 py-4 bg-blue-50 border-b border-blue-100 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                        </svg>
-                        <h3 class="text-sm font-semibold text-blue-700">Terima Barang</h3>
-                        <span class="text-xs text-blue-500 ml-auto">Admin only</span>
-                    </div>
+@if(auth()->guard('admin')->check() && $po->status === 'dipesan')
+    <div class="bg-white rounded-xl border border-blue-200 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 bg-blue-50 border-b border-blue-100 flex items-center gap-2">
+            <svg class="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            </svg>
+            <h3 class="text-sm font-semibold text-blue-700">Terima Barang & Input Stok</h3>
+        </div>
 
-                    <form method="POST" action="{{ route('admin.purchase-orders.receive', $po->id) }}" id="receive-form">
-                        @csrf
-                        <div class="p-5 overflow-x-auto">
-                            <table class="w-full text-sm">
-                                <thead class="border-b border-gray-100">
-                                    <tr>
-                                        <th class="pb-3 text-left font-semibold text-gray-600 text-xs uppercase tracking-wide">Material</th>
-                                        <th class="pb-3 text-right font-semibold text-gray-600 text-xs uppercase tracking-wide">Dipesan</th>
-                                        <th class="pb-3 text-center font-semibold text-gray-600 text-xs uppercase tracking-wide w-32">Jumlah Diterima</th>
-                                        @if($po->type === 'material')
-                                        <th class="pb-3 text-center font-semibold text-gray-600 text-xs uppercase tracking-wide">Expired Date</th>
-                                        @endif
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-50">
-                                    @foreach($po->items as $item)
-                                        <tr>
-                                            <input type="hidden" name="items[{{ $loop->index }}][id]" value="{{ $item->id }}">
-                                            <td class="py-3.5 pr-4">
-                                                <p class="font-medium text-gray-800">{{ $item->material->nama_bahan ?? $item->product->nama ?? '-' }}</p>
-                                                <p class="text-xs text-gray-400">{{ $item->material->satuan ?? '' }}</p>
-                                            </td>
-                                            <td class="py-3.5 text-right text-gray-600 pr-4">{{ number_format($item->jumlah) }}</td>
-                                            <td class="py-3.5 text-center">
-                                                @if($item->jumlah_diterima !== null && $item->jumlah_diterima != 0)
-                                                    <span class="inline-flex items-center gap-1 text-green-700 font-semibold text-xs bg-green-50 px-2.5 py-1 rounded-full">
-                                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                                                        Sudah ({{ $item->jumlah_diterima }})
-                                                    </span>
-                                                @else
-                                                    <input type="number" name="items[{{ $loop->index }}][jumlah_diterima]"
-                                                        min="0" value="{{ $item->jumlah }}" required
-                                                        class="w-24 border border-gray-300 rounded-lg px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent">
-                                                @endif
-                                            </td>
-                                            @if($po->type === 'material')
-                                            <td class="py-3.5 text-center">
-                                                @if($item->jumlah_diterima !== null && $item->jumlah_diterima != 0)
-                                                    <span class="text-gray-400 text-xs">-</span>
-                                                @else
-                                                    <input type="date" name="items[{{ $loop->index }}][expired_date]"
-                                                        class="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent">
-                                                @endif
-                                            </td>
-                                            @endif
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="px-5 pb-5">
-                            <button type="button" onclick="confirmReceive()"
-                                class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm shadow transition-colors">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                                </svg>
-                                Konfirmasi Penerimaan Barang
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            @endif
+        <form method="POST" action="{{ route('admin.purchase-orders.receive', $po->id) }}" id="receive-form">
+            @csrf
+            <div class="p-5 overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="border-b border-gray-100">
+                        <tr>
+                            <th class="pb-3 text-left font-semibold text-gray-600 text-xs uppercase tracking-wide">Item</th>
+                            <th class="pb-3 text-right font-semibold text-gray-600 text-xs uppercase tracking-wide w-24">Pesan</th>
+                            <th class="pb-3 text-center font-semibold text-gray-600 text-xs uppercase tracking-wide w-32">Diterima</th>
+                            <th class="pb-3 text-center font-semibold text-gray-600 text-xs uppercase tracking-wide w-48">Expired Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        @foreach($po->items as $item)
+                            <tr>
+                                <input type="hidden" name="items[{{ $loop->index }}][id]" value="{{ $item->id }}">
+                                <td class="py-3.5 pr-4">
+                                    <p class="font-medium text-gray-800">{{ $item->material->nama_bahan ?? $item->product->nama ?? '-' }}</p>
+                                    <p class="text-xs text-gray-400">{{ $item->material->satuan ?? 'Pcs' }}</p>
+                                </td>
+                                <td class="py-3.5 text-right text-gray-600 pr-4">{{ number_format($item->jumlah) }}</td>
+                                <td class="py-3.5 text-center">
+                                    <input type="number" name="items[{{ $loop->index }}][jumlah_diterima]" 
+                                        min="0" value="{{ $item->jumlah }}" required
+                                        class="w-24 border border-gray-300 rounded-lg px-2 py-1.5 text-center text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                                </td>
+                                <td class="py-3.5 pr-4 text-center">
+                                    {{-- Input Expired Date (Wajib untuk Material & Produk Obat) --}}
+                                    <input type="date" name="items[{{ $loop->index }}][expired_date]"
+                                        @if($po->type === 'material' || ($item->product && $item->product->type === 'obat')) required @endif
+                                        class="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-400 focus:outline-none bg-gray-50 focus:bg-white transition-all">
+                                    @if($po->type === 'material' || ($item->product && $item->product->type === 'obat'))
+                                        <p class="text-[10px] text-red-500 mt-1">* Wajib diisi</p>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            <div class="px-5 pb-5 flex justify-end">
+                <button type="button" onclick="confirmReceive()"
+                    class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2.5 rounded-lg text-sm shadow transition-all active:scale-95">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Konfirmasi & Update Stok
+                </button>
+            </div>
+        </form>
+    </div>
+@endif
 
             {{-- Timeline --}}
             @if($po->status === 'diterima')

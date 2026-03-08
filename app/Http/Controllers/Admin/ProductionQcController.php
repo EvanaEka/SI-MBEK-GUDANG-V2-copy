@@ -89,6 +89,7 @@ class ProductionQcController extends Controller
                 'qc_status' => $status,
                 'qc_percentage' => $percentage,
                 'qc_threshold' => $threshold,
+                'status'        => $status === 'layak' ? 'diproses' : 'rejected'
             ]);
 
             $actor = $this->getCurrentActor();

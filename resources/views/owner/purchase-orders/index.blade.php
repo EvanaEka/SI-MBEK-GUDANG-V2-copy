@@ -4,7 +4,7 @@
         {{-- Header --}}
         <div class="flex items-center justify-between mb-8">
             <div>
-                <h1 class="text-2xl font-bold text-gray-800">Purchase Order</h1>
+                <h1 class="text-2xl font-bold text-gray-800">Pemesanan Bahan</h1>
                 <p class="text-sm text-gray-500 mt-1">Kelola pemesanan bahan baku & produk</p>
             </div>
             <a href="{{ route('owner.purchase-orders.create') }}"
@@ -12,7 +12,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                 </svg>
-                Buat PO Baru
+                Buat Pemesanan Baru
             </a>
         </div>
 

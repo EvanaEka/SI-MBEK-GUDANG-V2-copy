@@ -141,8 +141,8 @@ class ProductionController extends Controller
 
             DB::commit();
 
-            return redirect()->back()
-                ->with('success', 'Produksi berhasil dimulai');
+            return redirect()->route('admin.productions.index')
+        ->with('success', 'Proses produksi berhasil dimulai. Silakan lanjutkan ke tahap QC.');
 
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -237,8 +237,13 @@ class ProductionController extends Controller
             ->with('success', 'QC berhasil disimpan');
     }
 
-    public function selesai(Production $production)
-    {
+   public function selesai(Request $request, Production $production)
+{
+    // 1. Validasi Input Tanggal
+    $request->validate([
+        'expired_date' => 'required|date|after:today',
+    ]);
+
         if ($production->status === 'selesai') {
             return back()->withErrors([
                 'status' => 'Produksi sudah selesai',
@@ -267,6 +272,12 @@ class ProductionController extends Controller
 
         try {
 
+        // 2. Update Tanggal Expired di Tabel Productions
+        $production->update([
+            'status' => 'selesai',
+            'expired_date' => $request->expired_date,
+        ]);
+
             // 1️⃣ Tambah stok summary
             $production->product->increment(
                 'stok',
@@ -280,7 +291,7 @@ class ProductionController extends Controller
                 'source' => 'production',
                 'reference_id' => $production->id,
                 'received_date' => $production->production_date ?? now(),
-                'expired_date' => $production->expired_date,
+                'expired_date' => $request->expired_date,
             ]);
 
             // 3️⃣ Stock movement log
@@ -323,5 +334,68 @@ class ProductionController extends Controller
             throw $e;
         }
     }
+/** 
+ * Route: GET /admin/productions  →  admin.productions.index
+ */
+public function index()
+{
+    $productions = Production::with(['product', 'formula'])
+        ->latest()
+        ->get();
+
+    return view('admin.production.index', compact('productions'));
+}
+
+/**
+ * Form buat produksi baru
+ * Route: GET /admin/productions/create  →  admin.productions.create
+ */
+public function create()
+{
+    $formulas = Formula::where('is_active', true)->get();
+
+    // Map formula_id → list produk (untuk JS dynamic dropdown)
+    $formulaProducts = [];
+    $formulaMaterials = [];
+
+    foreach ($formulas as $formula) {
+        // Produk yang punya formula_id ini
+        $formulaProducts[$formula->id] = \App\Models\Product::where('formula_id', $formula->id)
+            ->select('id', 'kode', 'nama')
+            ->get()
+            ->toArray();
+
+        // Komposisi bahan untuk preview
+        $formulaMaterials[$formula->id] = $formula->materials
+            ->map(fn($m) => [
+                'nama_bahan'  => $m->nama_bahan,
+                'satuan'      => $m->satuan,
+                'persentase'  => $m->pivot->persentase,
+            ])
+            ->toArray();
+    }
+
+    return view('admin.production.create', compact(
+        'formulas',
+        'formulaProducts',
+        'formulaMaterials'
+    ));
+}
+
+public function show(Production $production)
+{
+    // PENTING: eager load formula->materials dengan pivot (persentase)
+    $production->load([
+        'product',
+        'formula.materials', // ini yang bikin komposisi bahan muncul
+    ]);
+
+    $qcIndicators = \App\Models\QcIndicator::active()
+        ->orderBy('is_critical', 'desc')
+        ->orderBy('name', 'asc')
+        ->get();
+
+    return view('admin.production.show', compact('production', 'qcIndicators'));
+}
 
 }
