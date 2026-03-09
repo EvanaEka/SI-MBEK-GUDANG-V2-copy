@@ -2,10 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\Kambing;
-use App\Models\Domba;
 use App\Http\Controllers\Controller;
-use App\Models\Order; 
+use App\Models\Order;
 use Illuminate\Http\Request;
 
 class PenjualanController extends Controller
@@ -13,7 +11,7 @@ class PenjualanController extends Controller
     // Invoice Otomatis
     public function invoice($order_id)
     {
-        $order = Order::with(['user', 'kambing', 'domba'])
+        $order = Order::with(['user', 'orderable'])
             ->where('order_id', $order_id)
             ->firstOrFail();
 
@@ -23,7 +21,7 @@ class PenjualanController extends Controller
     // Invoice Manual
     public function manualInvoice($order_id)
     {
-        $order = Order::with(['user', 'kambing', 'domba'])
+        $order = Order::with(['user', 'orderable'])
             ->where('order_id', $order_id)
             ->firstOrFail();
 

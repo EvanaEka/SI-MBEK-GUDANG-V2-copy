@@ -63,8 +63,8 @@
                 <h2 class="text-xl font-semibold mb-3 text-gray-800">Detail Produk</h2>
                 <div class="bg-gray-50 p-4 rounded-lg">
                     @php
-                        $produk = $order->kambing ?? $order->domba;
-                        $kategori = $order->kambing ? 'Kambing' : 'Domba';
+                        $produk = $order->orderable;
+                        $kategori = $produk ? class_basename($produk) : 'Tidak ditemukan';
                     @endphp
                     @if ($produk)
                         <div class="flex flex-col md:flex-row gap-4">
@@ -74,7 +74,8 @@
                             @endif
                             <div class="flex-1">
                                 <h3 class="font-semibold text-lg">{{ $kategori }} -
-                                    {{ $produk->name ?? 'Unnamed' }}</h3>
+                                    {{ $produk->name ?? 'Unnamed' }}
+                                </h3>
                                 <p class="text-gray-600 mb-2">{{ $produk->deskripsi ?? 'Tidak ada deskripsi' }}</p>
                                 <div class="grid grid-cols-2 gap-2 text-sm">
                                     <div>
@@ -85,13 +86,13 @@
                                         <span class="text-gray-600">Umur:</span>
                                         <span class="font-medium">
                                             @php
-                                            $birthDate = new DateTime($produk->tanggal_lahir);
-                                            $today = new DateTime();
-                                            $diff = $today->diff($birthDate);
+                                                $birthDate = new DateTime($produk->tanggal_lahir);
+                                                $today = new DateTime();
+                                                $diff = $today->diff($birthDate);
 
-                                            $years = $diff->y;
-                                            $months = $diff->m;
-                                        @endphp
+                                                $years = $diff->y;
+                                                $months = $diff->m;
+                                            @endphp
                                             @if ($years > 0 && $months > 0)
                                                 {{ $years }} tahun {{ $months }} bulan
                                             @elseif($years > 0)
@@ -158,7 +159,8 @@
                         <div>
                             <p class="text-sm text-gray-600">Tanggal Transfer</p>
                             <p class="font-medium">
-                                {{ $order->transfer_date ? $order->transfer_date->format('d F Y') : '-' }}</p>
+                                {{ $order->transfer_date ? $order->transfer_date->format('d F Y') : '-' }}
+                            </p>
                         </div>
                     </div>
 
@@ -229,8 +231,7 @@
     </div>
 
     {{-- Modal untuk memperbesar gambar --}}
-    <div id="imageModal"
-        class="fixed inset-0 bg-black bg-opacity-75 hidden z-50 flex items-center justify-center p-4">
+    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-75 hidden z-50 flex items-center justify-center p-4">
         <div class="relative max-w-4xl max-h-full">
             <img id="modalImage" src="" alt="Bukti Transfer" class="max-w-full max-h-full object-contain">
             <button onclick="closeImageModal()"
@@ -256,14 +257,14 @@
         }
 
         // Close modal when clicking outside the image
-        document.getElementById('imageModal').addEventListener('click', function(e) {
+        document.getElementById('imageModal').addEventListener('click', function (e) {
             if (e.target === this) {
                 closeImageModal();
             }
         });
 
         // Close modal with Escape key
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 closeImageModal();
             }

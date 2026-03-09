@@ -350,7 +350,8 @@
                             <div>
                                 <p class="text-sm text-gray-600">Total Pendapatan</p>
                                 <p class="text-2xl font-bold text-gray-900">Rp
-                                    {{ number_format($totalPendapatan, 0, ',', '.') }}</p>
+                                    {{ number_format($totalPendapatan, 0, ',', '.') }}
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -367,7 +368,7 @@
                         </div>
                     </div>
                 </div>
-                 <!-- Chart Trend Penjualan -->
+                <!-- Chart Trend Penjualan -->
                 <div class="card p-6 mb-6">
                     <h3 class="text-lg font-semibold mb-4">Trend Penjualan</h3>
                     <div class="chart-container">
@@ -418,12 +419,11 @@
                         <input type="date" name="start_date" value="{{ request('start_date') }}"
                             class="w-full md:w-auto">
                         <span class="mx-2 text-gray-500 hidden md:inline">sampai</span>
-                        <input type="date" name="end_date" value="{{ request('end_date') }}"
-                            class="w-full md:w-auto">
+                        <input type="date" name="end_date" value="{{ request('end_date') }}" class="w-full md:w-auto">
                     </div>
                     <div class="flex flex-col md:flex-row md:items-center gap-2 w-full md:w-auto">
-                        <input type="text" name="search" value="{{ request('search') }}"
-                            placeholder="Cari transaksi..." class="w-full md:w-auto min-w-[200px]">
+                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari transaksi..."
+                            class="w-full md:w-auto min-w-[200px]">
                         <button type="submit" class="ml-0 md:ml-2">
                             <i class="fas fa-search mr-2"></i> Cari
                         </button>
@@ -463,26 +463,22 @@
                                                     <i class="fas fa-university mr-1"></i> Manual
                                                 </span>
                                             @else
-                                                <span
-                                                    class="px-2 py-1 rounded-full status-midtrans text-xs font-medium">
+                                                <span class="px-2 py-1 rounded-full status-midtrans text-xs font-medium">
                                                     <i class="fas fa-credit-card mr-1"></i> Midtrans
                                                 </span>
                                             @endif
                                         </td>
                                         <td>
-                                            @if ($order->kambing)
-                                                <div class="font-medium">{{ $order->kambing->name }}</div>
-                                                <div class="text-sm text-gray-500">ID: {{ $order->kambing->id }}</div>
-                                            @elseif($order->domba)
-                                                <div class="font-medium">{{ $order->domba->nama }}</div>
-                                                <div class="text-sm text-gray-500">ID: {{ $order->domba->id }}</div>
+                                            @if ($order->orderable)
+                                                {{ class_basename($order->orderable_type) }} - {{ $order->orderable->name }}
                                             @else
-                                                <div class="text-gray-500">Produk tidak ditemukan</div>
+                                                Produk tidak ditemukan
                                             @endif
                                         </td>
                                         {{-- <td>{{ $order->qty }}</td> --}}
                                         <td class="font-medium">Rp
-                                            {{ number_format($order->gross_amount, 0, ',', '.') }}</td>
+                                            {{ number_format($order->gross_amount, 0, ',', '.') }}
+                                        </td>
                                         <td class="whitespace-nowrap w-auto">
                                             <span id="status-badge-{{ $order->id }}">
                                                 @if ($order->status === 'settlement' || $order->status === 'capture')
@@ -531,8 +527,7 @@
                                                 <!-- Status Change Buttons (only for manual transfer) -->
                                                 @if ($order->payment_method === 'manual' || $order->payment_method === 'bank_transfer')
                                                     @if ($order->status !== 'settlement')
-                                                        <button
-                                                            onclick="changeOrderStatus({{ $order->id }}, 'settlement')"
+                                                        <button onclick="changeOrderStatus({{ $order->id }}, 'settlement')"
                                                             class="btn btn-success btn-sm">
                                                             <i class="fas fa-check mr-1"></i> Terima
                                                         </button>
@@ -545,8 +540,7 @@
                                                             <i class="fas fa-edit mr-1"></i> Edit Catatan
                                                         </button>
                                                     @elseif($order->status !== 'settlement')
-                                                        <button
-                                                            onclick="changeOrderStatus({{ $order->id }}, 'cancel')"
+                                                        <button onclick="changeOrderStatus({{ $order->id }}, 'cancel')"
                                                             class="btn btn-danger btn-sm">
                                                             <i class="fas fa-times mr-1"></i> Tolak
                                                         </button>
@@ -589,13 +583,13 @@
                     <div id="notesContainer" class="mt-4 hidden">
                         <label for="rejectNotes" class="block text-sm font-medium text-gray-700 mb-2">Catatan
                             Penolakan:</label>
-                        <textarea id="rejectNotes" rows="3" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm"
+                        <textarea id="rejectNotes" rows="3"
+                            class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm"
                             placeholder="Masukkan alasan penolakan..."></textarea>
                     </div>
                 </div>
                 <div class="flex justify-end gap-2">
-                    <button onclick="closeModal()"
-                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg">Batal</button>
+                    <button onclick="closeModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg">Batal</button>
                     <button id="confirmBtn" onclick="confirmAction()"
                         class="px-4 py-2 bg-red-500 text-white rounded-lg">Ya, Lanjutkan</button>
                 </div>
@@ -707,15 +701,15 @@
                     }
 
                     fetch(`/admin/orders/${currentOrderId}/notes`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': csrfToken
-                            },
-                            body: JSON.stringify({
-                                notes: notes
-                            })
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        body: JSON.stringify({
+                            notes: notes
                         })
+                    })
                         .then(async response => {
                             const data = await response.json();
                             if (!response.ok) {
@@ -752,23 +746,23 @@
                     }
 
                     fetch(`/admin/orders/${currentOrderId}/status`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': csrfToken
-                            },
-                            body: JSON.stringify({
-                                status: currentStatus,
-                                notes: notes || ''
-                            })
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        body: JSON.stringify({
+                            status: currentStatus,
+                            notes: notes || ''
                         })
+                    })
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
                                 updateStatusBadge(currentOrderId, currentStatus);
                                 showNotification(
                                     currentStatus === 'settlement' ? 'Pembayaran berhasil diterima!' :
-                                    'Pembayaran ditolak!',
+                                        'Pembayaran ditolak!',
                                     'success'
                                 );
                                 setTimeout(() => {
@@ -830,19 +824,19 @@
                 });
             }
             // Sales Trend Chart
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', function () {
                 const ctx = document.getElementById('salesTrendChart').getContext('2d');
-                
+
                 // Data dari controller (akan kita buat nanti)
                 const salesData = {
                     labels: {!! json_encode($salesTrend['labels']) !!},
                     transactionCounts: {!! json_encode($salesTrend['counts']) !!},
                     revenueData: {!! json_encode($salesTrend['revenues']) !!}
                 };
-                
+
                 // Konversi revenue ke juta rupiah agar skalanya lebih sesuai
                 const revenueInMillions = salesData.revenueData.map(amount => amount / 1000000);
-                
+
                 new Chart(ctx, {
                     type: 'line',
                     data: {
@@ -909,7 +903,7 @@
                         plugins: {
                             tooltip: {
                                 callbacks: {
-                                    label: function(context) {
+                                    label: function (context) {
                                         let label = context.dataset.label || '';
                                         if (label) {
                                             label += ': ';

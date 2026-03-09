@@ -132,7 +132,7 @@ class DashboardController extends Controller
     public function penjualan(Request $request)
     {
         // Query dasar (existing code)
-        $ordersQuery = \App\Models\Order::with('user', 'kambing', 'domba')->latest();
+        $ordersQuery = \App\Models\Order::with(['user', 'orderable'])->latest();
 
         // === FILTER === (existing code)
         if ($request->status && $request->status !== 'all') {
@@ -286,7 +286,7 @@ class DashboardController extends Controller
     public function updateStatus(Request $request, $orderId)
     {
         try {
-            $order = \App\Models\Order::with('kambing', 'domba')->findOrFail($orderId);
+            $order = \App\Models\Order::with(['user', 'orderable'])->findOrFail($orderId);
 
             $status = $request->input('status');
             $notes = $request->input('notes');
@@ -308,20 +308,24 @@ class DashboardController extends Controller
             $order->save();
 
             // Update product status
-            if ($status === 'settlement') {
-                if ($order->kambing) {
-                    $order->kambing->update(['for_sale' => 'no', 'is_locked' => false]);
+            $item = $order->orderable;
+
+            if ($item instanceof Kambing || $item instanceof Domba) {
+
+                if ($status === 'settlement') {
+                    $item->update([
+                        'for_sale' => 'no',
+                        'is_locked' => false
+                    ]);
                 }
-                if ($order->domba) {
-                    $order->domba->update(['for_sale' => 'no', 'is_locked' => false]);
+
+                if ($status === 'cancel') {
+                    $item->update([
+                        'for_sale' => 'yes',
+                        'is_locked' => false
+                    ]);
                 }
-            } elseif ($status === 'cancel') {
-                if ($order->kambing) {
-                    $order->kambing->update(['for_sale' => 'yes', 'is_locked' => false]);
-                }
-                if ($order->domba) {
-                    $order->domba->update(['for_sale' => 'yes', 'is_locked' => false]);
-                }
+
             }
 
             return response()->json([
