@@ -6,7 +6,7 @@
     </x-slot>
 
     <div class="container mx-auto mt-10 px-4" x-data="{ editMode: false }">
-        <form action="{{ route('admin.products.update', $product->id) }}" method="POST">
+        <form action="{{ route('admin.products.update', $product->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
 
@@ -35,6 +35,12 @@
                 {{-- Content Card --}}
                 <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                     <div>
+                        {{-- Foto View --}}
+                       <div class="mb-6 flex justify-center bg-gray-50 p-4 rounded-lg">
+   <img src="{{ $product->image ? asset($product->image) : asset('logo/logosimbek.png') }}" 
+     class="h-40 w-auto rounded shadow-sm object-cover"
+     onerror="this.onerror=null; this.src='{{ asset('logo/logosimbek.png') }}';">
+</div>
                          <div class="mb-4">
                             <p class="text-xs text-black font-bold uppercase mb-1">Kode</p>
                             <p x-show="!editMode" class="text-lg text-gray-800 font-semibold">{{ $product->kode }}</p>
@@ -45,6 +51,18 @@
                             <p class="text-xs text-black font-bold uppercase mb-1">Nama Produk</p>
                             <p x-show="!editMode" class="text-lg text-gray-800 font-semibold">{{ $product->nama }}</p>
                             <input x-show="editMode" type="text" name="nama" value="{{ $product->nama }}" class="w-full border-gray-300 rounded focus:ring-orange-500 text-black">
+                        </div>
+
+                        <div class="mb-4" x-show="editMode">
+                            <p class="text-xs text-black font-bold uppercase mb-1">Ganti Foto Produk</p>
+                            <input type="file" name="image" class="w-full border-gray-300 rounded p-1 text-black" accept="image/*">
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="mb-4">
+                            <p class="text-xs text-black font-bold uppercase mb-1">Stok Sistem Saat Ini</p>
+                            <p class="text-3xl font-bold text-orange-600">{{ $product->stok }} <span class="text-sm text-gray-500">Unit</span></p>
                         </div>
 
                         <div class="mb-4">
@@ -59,18 +77,10 @@
                         <div class="mb-4">
                             <p class="text-xs text-black font-bold uppercase mb-1">Sumber</p>
                             <p x-show="!editMode" class="text-lg text-gray-800 uppercase">{{ $product->source }}</p>
-                            {{-- PERBAIKAN: Value harus 'pembelian' dan 'produksi' (sesuai database/controller) --}}
                             <select x-show="editMode" name="source" class="w-full border-gray-300 rounded text-black">
                                 <option value="pembelian" {{ $product->source == 'pembelian' ? 'selected' : '' }}>Pembelian</option>
                                 <option value="produksi" {{ $product->source == 'produksi' ? 'selected' : '' }}>Produksi</option>
                             </select>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="mb-4">
-                            <p class="text-xs text-black font-bold uppercase mb-1">Stok Sistem Saat Ini</p>
-                            <p class="text-3xl font-bold text-orange-600">{{ $product->stok }} <span class="text-sm text-gray-500">Unit</span></p>
                         </div>
 
                         <div class="mb-4">
@@ -80,22 +90,19 @@
                         </div>
 
                         <div class="mb-4">
-    <p class="text-xs text-black font-bold uppercase mb-1">Resep / Formula</p>
-    {{-- Tampilan saat mode lihat --}}
-    <p x-show="!editMode" class="text-lg text-gray-800">
-        {{ $product->formula->nama_formula ?? '-- Tanpa Formula --' }}
-    </p>
-    
-    {{-- Dropdown saat mode edit --}}
-    <select x-show="editMode" name="formula_id" class="w-full border-gray-300 rounded text-black">
-        <option value="">-- Tanpa Formula --</option>
-        @foreach($formulas as $f)
-            <option value="{{ $f->id }}" {{ $product->formula_id == $f->id ? 'selected' : '' }}>
-                {{ $f->nama_formula }}
-            </option>
-        @endforeach
-    </select>
-</div>
+                            <p class="text-xs text-black font-bold uppercase mb-1">Resep / Formula</p>
+                            <p x-show="!editMode" class="text-lg text-gray-800">
+                                {{ $product->formula->nama_formula ?? '-- Tanpa Formula --' }}
+                            </p>
+                            <select x-show="editMode" name="formula_id" class="w-full border-gray-300 rounded text-black">
+                                <option value="">-- Tanpa Formula --</option>
+                                @foreach($formulas as $f)
+                                    <option value="{{ $f->id }}" {{ $product->formula_id == $f->id ? 'selected' : '' }}>
+                                        {{ $f->nama_formula }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                 </div>
 

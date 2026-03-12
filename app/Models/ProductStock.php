@@ -55,4 +55,9 @@ class ProductStock extends Model
             default => null,
         };
     }
+
+    public function disposals()
+    {
+        return $this->morphMany(Disposal::class, 'disposable');
+    }
 }

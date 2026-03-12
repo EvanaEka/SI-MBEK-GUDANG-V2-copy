@@ -31,7 +31,7 @@ class ProductInventoryController extends Controller
 {
     // 1. Ambil data batch yang masih memiliki stok
     $batches = $product->stocks()
-        ->where('qty', '>', 0)
+        //->where('qty', '>', 0)
         ->orderBy('received_date', 'asc')
         ->get();
 

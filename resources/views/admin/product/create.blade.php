@@ -4,7 +4,7 @@
     </x-slot>
 
     <div class="container mx-auto mt-10 px-4">
-        <form action="{{ route('admin.products.store') }}" method="POST" class="bg-white shadow-md rounded-lg p-8 border border-gray-200">
+        <form action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data" class="bg-white shadow-md rounded-lg p-8 border border-gray-200">
             @csrf
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -19,6 +19,10 @@
                         <option value="produksi">Hasil Produksi Sendiri</option>
                         <option value="pembelian">Beli Jadi</option>
                     </select>
+
+                    <label class="block font-bold mt-4 mb-2">Foto Produk</label>
+                    <input type="file" name="image" class="w-full border-gray-300 rounded p-1" accept="image/*">
+                    <p class="text-xs text-gray-500 mt-1">Maksimal 2MB (JPG, PNG, WEBP)</p>
                 </div>
 
                 <div>

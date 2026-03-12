@@ -4,11 +4,42 @@
 --}}
 <div class="space-y-6">
 
+    {{-- Flash messages --}}
+    @if(session('warning'))
+        <div class="flex items-start gap-3 bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded-xl px-4 py-3">
+            <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span>{{ session('warning') }}</span>
+        </div>
+    @endif
+
+    @if(session('success'))
+        <div class="flex items-start gap-3 bg-green-50 border border-green-200 text-green-800 text-sm rounded-xl px-4 py-3">
+            <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <span>{{ session('success') }}</span>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="flex items-start gap-3 bg-red-50 border border-red-200 text-red-800 text-sm rounded-xl px-4 py-3">
+            <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+            </svg>
+            <span>{{ $errors->first() }}</span>
+        </div>
+    @endif
+
     {{-- Mini stat bar --}}
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 flex flex-wrap items-center gap-6 text-sm">
         <div class="flex items-center gap-2">
             <span class="text-gray-400 text-xs">Stok Total</span>
             <span class="font-bold {{ $belowRop ? 'text-red-600' : 'text-gray-800' }}">{{ number_format($product->stok) }}</span>
+            @if($belowRop)
+                <span class="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-semibold">⚠ ROP: {{ $product->rop }}</span>
+            @endif
         </div>
         <div class="w-px h-4 bg-gray-200"></div>
         <div class="flex items-center gap-2">
@@ -26,8 +57,7 @@
             <span class="text-gray-400 text-xs">Sisa Bebas</span>
             <span class="font-bold {{ $sisaBebas === 0 ? 'text-red-600' : 'text-green-600' }}">{{ number_format($sisaBebas) }}</span>
         </div>
-        @php $totalAlokasi = $qJual + $qInternal; @endphp
-        @if($totalAlokasi > $product->stok)
+        @if(($qJual + $qInternal) > $product->stok)
             <span class="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
                 <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
                 Alokasi melebihi stok!
@@ -73,17 +103,25 @@
                     <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Catat Penjualan</p>
                     @if($qJual > 0)
                         <form method="POST" action="{{ route('admin.product.allocations.sell', $product->id) }}"
-                            class="flex gap-2">
+                            class="space-y-2">
                             @csrf
-                            <input type="number" name="qty" min="1" max="{{ $qJual }}" required
-                                placeholder="Qty terjual (maks. {{ $qJual }})"
-                                class="flex-1 border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
-                            <button type="submit"
-                                class="px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors flex-shrink-0">
-                                Jual
-                            </button>
+                            <div class="flex gap-2">
+                                <input type="number" name="qty" min="1" max="{{ $qJual }}" required
+                                    placeholder="Qty (maks. {{ $qJual }})"
+                                    class="flex-1 border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
+                                <button type="submit"
+                                    class="px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg transition-colors flex-shrink-0">
+                                    Jual
+                                </button>
+                            </div>
+                            <input type="text" name="nama_pembeli"
+                                placeholder="Nama pembeli (opsional)"
+                                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
+                            <input type="text" name="catatan"
+                                placeholder="Catatan (opsional)"
+                                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
                         </form>
-                        <p class="text-xs text-gray-400 mt-1.5">Akan mengurangi stok + alokasi jual via FIFO.</p>
+                        <p class="text-xs text-gray-400 mt-2">Akan mengurangi stok + alokasi jual via FIFO.</p>
                     @else
                         <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-xs text-gray-400">
                             <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -161,7 +199,7 @@
 
         <form method="POST" action="{{ route('admin.inventory.product.adjust', $product->id) }}"
              class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-                    @csrf
+            @csrf
             <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1.5">Tipe <span class="text-red-500">*</span></label>
                 <select name="type" id="adj-type" required
@@ -175,29 +213,27 @@
                 <input type="number" name="qty" min="1" required placeholder="0"
                     class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
             </div>
-              <div id="adj-expired-wrap">
-                        <label class="block text-xs font-medium text-gray-500 mb-1.5">
-                            Expired Date <span class="text-gray-300"></span>
-                        </label>
-                        <input type="date" name="expired_date"
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent">
-                    </div>
+            <div id="adj-expired-wrap">
+                <label class="block text-xs font-medium text-gray-500 mb-1.5">Expired Date</label>
+                <input type="date" name="expired_date"
+                    class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent">
+            </div>
             <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1.5">Alasan</label>
                 <input type="text" name="reason" placeholder="Misal: stok opname..."
                     class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
             </div>
             <div>
-                 <button type="submit"
-                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm shadow transition-colors">
-                            Simpan
-                        </button>
+                <button type="submit"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm shadow transition-colors">
+                    Simpan
+                </button>
             </div>
         </form>
     </div>
-     @push('scripts')
+
+    @push('scripts')
     <script>
-        // Sembunyikan field expired_date saat tipe 'out' (tidak relevan)
         const adjType = document.getElementById('adj-type');
         const expWrap = document.getElementById('adj-expired-wrap');
 
@@ -206,7 +242,7 @@
         }
 
         adjType.addEventListener('change', toggleExpiredField);
-        toggleExpiredField(); // init
+        toggleExpiredField();
     </script>
     @endpush
 

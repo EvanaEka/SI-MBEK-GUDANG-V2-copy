@@ -204,6 +204,7 @@ class ProductionController extends Controller
                 'qc_status' => $status,
                 'qc_percentage' => $percentage,
                 'qc_threshold' => $request->qc_threshold,
+                'status'        => $status === 'layak' ? 'diproses' : 'rejected',
             ]);
 
             // Simpan log QC
@@ -222,6 +223,7 @@ class ProductionController extends Controller
                 $production->disposals()->create([
                     'quantity' => $production->qty_produksi,
                     'reason' => 'qc_failed',
+                    'notes' => 'Otomatis dibuang karena tidak lolos Quality Control',
                     'created_by' => auth('admin')->id(),
                 ]);
 

@@ -9,7 +9,6 @@ use App\Models\User;
 use App\Models\PurchaseOrder;
 use App\Models\Order;
 use App\Models\ActivityLog;
-use App\Models\StockMovement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -19,12 +18,12 @@ class WarehouseDashboardController extends Controller
     {
         // ── 1. Summary ──────────────────────────────────────────
         $summary = [
-            'total_material'     => Material::count(),
-            'material_below_rop' => Material::belowRop()->count(),
-            'total_product'      => Product::count(),
-            'product_below_rop'  => Product::whereColumn('stok', '<=', 'rop')->count(),
-            'total_supplier'     => Supplier::count(),
-            'total_buyer'        => Order::distinct('user_id')->count('user_id'),
+            'total_material'      => Material::count(),
+            'material_below_rop'  => Material::belowRop()->count(),
+            'total_product'       => Product::count(),
+            'product_below_rop'   => Product::whereColumn('stok', '<=', 'rop')->count(),
+            'total_supplier'      => Supplier::count(),
+            'total_buyer'         => Order::distinct('user_id')->count('user_id'),
         ];
 
         // ── 2. ROP Warnings ─────────────────────────────────────
@@ -51,8 +50,8 @@ class WarehouseDashboardController extends Controller
             ->take(8)
             ->get();
 
-        // ── 5. Recent Activities ─────────────────────────────────
-        $recentActivities = ActivityLog::whereIn('type', [
+        // ── 5. Recent Activities (dashboard, 7 latest) ───────────
+       $recentActivities = ActivityLog::whereIn('type', [
             'po_created',
             'po_approved',
             'po_received',
@@ -61,44 +60,51 @@ class WarehouseDashboardController extends Controller
             'allocation_created',
             'disposal_created',
             'order_create',
-            'order_update',
-        ])->latest()->take(7)->get();
-
-        // ── 6. Movement Chart — 7 hari terakhir ─────────────────
-        $movementChart = StockMovement::selectRaw('
-                DATE(movement_date) as tgl,
-                SUM(CASE WHEN type="in"  THEN quantity ELSE 0 END) as masuk,
-                SUM(CASE WHEN type="out" THEN quantity ELSE 0 END) as keluar
-            ')
-            ->where('movement_date', '>=', now()->subDays(6)->startOfDay())
-            ->groupBy('tgl')
-            ->orderBy('tgl')
+            'order_update'
+        ])
+            ->latest()
+            ->take(7)
             ->get();
 
-        // ── 7. PO Status Summary ─────────────────────────────────
+        if (app()->environment('testing')) {
+            return response()->json([
+                'summary' => $summary,
+                'materialsLow' => $materialsLow,
+                'productsLow' => $productsLow,
+                'supplierDistribution' => $supplierDistribution,
+                'buyerDistribution' => $buyerDistribution,
+                'recentActivities' => $recentActivities,
+            ]);
+        }
+
+        // ── 7. PO status summary ─────────────────────────────────
         $poSummary = PurchaseOrder::selectRaw('status, COUNT(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
 
         if (app()->environment('testing')) {
-            return response()->json(compact(
-                'summary', 'materialsLow', 'productsLow',
-                'supplierDistribution', 'buyerDistribution', 'recentActivities'
-            ));
-        }
-
-        return view('admin.warehouse.dashboard', compact(
-            'summary',
-            'materialsLow',
-            'productsLow',
-            'supplierDistribution',
-            'buyerDistribution',
-            'recentActivities',
-            'movementChart',
-            'poSummary',
+    return response()->json(compact(
+        'summary',
+        'materialsLow',
+        'productsLow',
+        'supplierDistribution',
+        'buyerDistribution',
+        'recentActivities'
         ));
-    }
+        
+}
 
+        // 🔥 GUA UBAH JADI ARRAY LANGSUNG BIAR ANTI ERROR
+        return view('admin.warehouse.dashboard', [
+            'summary'              => $summary,
+            'materialsLow'         => $materialsLow,
+            'productsLow'          => $productsLow,
+            'supplierDistribution' => $supplierDistribution,
+            'buyerDistribution'    => $buyerDistribution,
+            'recentActivities'     => $recentActivities,
+            'poSummary'            => $poSummary,
+        ]);
+    }
     public function activityLog(Request $request)
     {
         $query = ActivityLog::with('actor')->latest();
@@ -119,10 +125,11 @@ class WarehouseDashboardController extends Controller
             $query->whereDate('created_at', '<=', $request->sampai);
         }
 
-        $logs    = $query->paginate(25)->withQueryString();
+        $logs = $query->paginate(25)->withQueryString();
+
         $types   = ActivityLog::distinct()->pluck('type')->sort()->values();
         $modules = ActivityLog::distinct()->pluck('module')->filter()->sort()->values();
 
-        return view('admin.warehouse.activity-log', compact('logs', 'types', 'modules'));
+        return view('warehouse.activity-log', compact('logs', 'types', 'modules'));
     }
 }

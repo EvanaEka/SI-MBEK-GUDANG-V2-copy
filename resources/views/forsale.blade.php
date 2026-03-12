@@ -1,6 +1,7 @@
 @php
     use App\Models\Kambing;
     use App\Models\Domba;
+    use App\Models\Product;
 
     $kategoriProduk = request('kategori_produk', 'semua');
     $jenisList = [];
@@ -12,13 +13,18 @@
     } elseif ($kategoriProduk === 'domba') {
         $jenisList = Domba::whereNotNull('type_domba')->distinct()->pluck('type_domba')->toArray();
         $currentProduk = $dombas;
+    } elseif ($kategoriProduk === 'produk') {
+        // Kategori khusus Pakan dan Obat
+        $jenisList = Product::whereNotNull('type')->distinct()->pluck('type')->toArray();
+        $currentProduk = $products;
     } else {
-        // Gabungkan kambing dan domba untuk kategori "semua"
+        // Gabungkan kambing, domba, dan produk untuk kategori "semua"
         $jenisList = array_merge(
             Kambing::whereNotNull('type_goat')->distinct()->pluck('type_goat')->toArray(),
             Domba::whereNotNull('type_domba')->distinct()->pluck('type_domba')->toArray(),
+            Product::whereNotNull('type')->distinct()->pluck('type')->toArray()
         );
-        $currentProduk = $kambings->concat($dombas);
+        $currentProduk = collect()->concat($kambings)->concat($dombas)->concat($products);
     }
 @endphp
 
@@ -35,7 +41,7 @@
             {{-- SIDEBAR --}}
             <aside class="w-full lg:w-1/5">
                 <div class="bg-white rounded-xl shadow p-4 sticky top-20">
-                    <h2 class="text-lg font-bold mb-4">Etalase Toko ({{ $totalProduk }})</h2>
+                    <h2 class="text-lg font-bold mb-4">Etalase Toko ({{ $currentProduk->count() }})</h2>
                     <ul class="space-y-2 text-gray-700 text-sm">
                         {{-- Semua Produk --}}
                         <li>
@@ -44,10 +50,10 @@
                                 Semua Produk
                             </a>
                         </li>
+                        
                         {{-- Kambing --}}
                         <li>
                             @php
-                                // Ambil hanya jenis kambing yang ada stok for_sale = 'yes'
                                 $jenisKambingList = Kambing::where('for_sale', 'yes')
                                     ->whereNotNull('type_goat')
                                     ->distinct()
@@ -61,7 +67,6 @@
                                 class="block px-3 py-2 rounded font-bold {{ $isKambingActive ? 'bg-brand-orange text-white font-bold' : 'hover:bg-orange-50' }}">
                                 Kambing
                             </a>
-                            {{-- Dropdown Jenis Kambing --}}
                             @if ($jenisKambingList->count())
                                 <details class="group mt-1" {{ $isKambingActive && request('jenis') ? 'open' : '' }}>
                                     <summary class="cursor-pointer hover:text-brand-orange py-1 pl-4">
@@ -80,10 +85,10 @@
                                 </details>
                             @endif
                         </li>
+                        
                         {{-- Domba --}}
                         <li>
                             @php
-                                // Ambil hanya jenis domba yang ada stok for_sale = 'yes'
                                 $jenisDombaList = Domba::where('for_sale', 'yes')
                                     ->whereNotNull('type_domba')
                                     ->distinct()
@@ -97,7 +102,6 @@
                                 class="block px-3 py-2 rounded font-bold {{ $isDombaActive ? 'bg-brand-orange text-white font-bold' : 'hover:bg-orange-50' }}">
                                 Domba
                             </a>
-                            {{-- Dropdown Jenis Domba --}}
                             @if ($jenisDombaList->count())
                                 <details class="group mt-1" {{ $isDombaActive && request('jenis') ? 'open' : '' }}>
                                     <summary class="cursor-pointer hover:text-brand-orange py-1 pl-4">
@@ -116,12 +120,46 @@
                                 </details>
                             @endif
                         </li>
+
+                        {{-- Produk Pakan/Obat --}}
+                        <li>
+                            @php
+                                $jenisProdukList = Product::whereHas('allocations', function ($q) {
+                                        $q->where('type', 'jual')->where('qty', '>', 0);
+                                    })
+                                    ->whereNotNull('type')
+                                    ->distinct()
+                                    ->pluck('type');
+                                $isProdukActive = $kategoriProduk === 'produk';
+                            @endphp
+                            <a href="{{ url()->current() . '?' . http_build_query(array_merge($baseParams, ['kategori_produk' => 'produk'])) }}"
+                                class="block px-3 py-2 rounded font-bold {{ $isProdukActive ? 'bg-brand-orange text-white font-bold' : 'hover:bg-orange-50' }}">
+                                Produk / Pakan
+                            </a>
+                            @if ($jenisProdukList->count())
+                                <details class="group mt-1" {{ $isProdukActive && request('jenis') ? 'open' : '' }}>
+                                    <summary class="cursor-pointer hover:text-brand-orange py-1 pl-4">
+                                        Jenis Produk
+                                    </summary>
+                                    <ul class="ml-6 mt-2 space-y-1 text-sm text-gray-600">
+                                        @foreach ($jenisProdukList as $jenis)
+                                            <li>
+                                                <a href="{{ url()->current() . '?' . http_build_query(array_merge($baseParams, ['kategori_produk' => 'produk', 'jenis' => $jenis])) }}"
+                                                    class="block px-2 py-1 rounded {{ $kategoriProduk === 'produk' && request('jenis') === $jenis ? 'bg-orange-100 text-brand-orange font-bold' : 'hover:bg-orange-50' }}">
+                                                    {{ ucfirst($jenis) }}
+                                                </a>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </details>
+                            @endif
+                        </li>
                     </ul>
                 </div>
             </aside>
+
             {{-- KONTEN UTAMA --}}
             <section class="w-full lg:flex-1">
-                <!-- Filter dan Search -->
                 <form method="GET" class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                     <input type="hidden" name="kategori_produk" value="{{ request('kategori_produk', 'semua') }}">
                     @foreach (request()->except(['kategori_produk', 'sort', 'page', 'harga_min', 'harga_max']) as $key => $value)
@@ -145,19 +183,12 @@
                     <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto items-center">
                         <select name="sort" onchange="this.form.submit()"
                             class="rounded border-gray-300 focus:ring-2 focus:ring-blue-500 w-full sm:w-auto">
-                            <option value="latest" {{ request('sort') === 'latest' ? 'selected' : '' }}>Terbaru
-                            </option>
-                            <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Terlama
-                            </option>
-                            <option value="price_low" {{ request('sort') === 'price_low' ? 'selected' : '' }}>Harga
-                                Terendah
-                            </option>
-                            <option value="price_high" {{ request('sort') === 'price_high' ? 'selected' : '' }}>Harga
-                                Tertinggi
-                            </option>
+                            <option value="latest" {{ request('sort') === 'latest' ? 'selected' : '' }}>Terbaru</option>
+                            <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>Terlama</option>
+                            <option value="price_low" {{ request('sort') === 'price_low' ? 'selected' : '' }}>Harga Terendah</option>
+                            <option value="price_high" {{ request('sort') === 'price_high' ? 'selected' : '' }}>Harga Tertinggi</option>
                         </select>
-                        <div
-                            class="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded border border-gray-200 w-full sm:w-auto min-w-0">
+                        <div class="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded border border-gray-200 w-full sm:w-auto min-w-0">
                             <label class="text-gray-500 text-sm whitespace-nowrap">Harga</label>
                             <input type="text" name="harga_min" value="{{ request('harga_min') }}"
                                 class="flex-1 min-w-0 rounded border-gray-300 focus:ring-2 focus:ring-blue-500 px-2"
@@ -171,16 +202,13 @@
                         </div>
                     </div>
                 </form>
+
                 @if ($errors->has('harga_min'))
                     <div class="w-full md:w-auto mb-4">
-                        <div
-                            class="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded text-sm flex items-center gap-2">
-                            <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" stroke-width="2"
-                                viewBox="0 0 24 24">
-                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"
-                                    fill="none" />
-                                <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor"
-                                    stroke-width="2" />
+                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded text-sm flex items-center gap-2">
+                            <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" />
+                                <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="2" />
                                 <circle cx="12" cy="16" r="1" fill="currentColor" />
                             </svg>
                             {{ $errors->first('harga_min') }}
@@ -188,99 +216,104 @@
                     </div>
                 @endif
 
-                <!-- Grid Produk -->
                 <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-6">
                     @forelse($currentProduk as $produk)
                         @php
-                            $isPending = \App\Models\Order::isProductPending($produk->id);
+                            // Cek class_basename untuk bedain ternak dan produk kemasan
+                            $modelType = class_basename($produk);
+                            $isTernak = in_array($modelType, ['Kambing', 'Domba']);
+                            
+                            $isPending = \App\Models\Order::isProductPending($produk->id, get_class($produk));
+                            
+                            // Untuk Produk Pakan/Obat, ambil stok dari alokasi
+                            $stokTersedia = 1; // Default ternak 1
+                            if (!$isTernak) {
+                                $alokasi = $produk->allocations->where('type', 'jual')->first();
+                                $stokTersedia = $alokasi ? $alokasi->qty : 0;
+                            }
+
+                            // Cek Path Gambar Biar Gak Error
+                            $imgPath = asset('uploads/default.png');
+                            if (!empty($produk->image)) {
+                                if (str_starts_with($produk->image, 'http')) {
+                                    $imgPath = $produk->image;
+                                } elseif (str_starts_with($produk->image, 'storage/')) {
+                                    $imgPath = asset($produk->image);
+                                } else {
+                                    $imgPath = asset('storage/' . $produk->image);
+                                }
+                            }
                         @endphp
 
-                        <div class="bg-white border rounded-xl shadow-sm hover:shadow-md transition overflow-hidden 
-                            {{ $isPending ? 'opacity-75' : '' }}">
-                            <div class="aspect-[4/3] overflow-hidden">
-                                <img src="{{ $produk->image ? asset($produk->image) : asset('uploads/default.png') }}"
-                                    alt="{{ $produk->name }}" class=" w-full h-full object-cover">
+                        <div class="bg-white border rounded-xl shadow-sm hover:shadow-md transition overflow-hidden flex flex-col {{ $isPending ? 'opacity-75' : '' }}">
+                            
+                            <div class="aspect-[4/3] bg-gray-50 flex-shrink-0">
+                                <img src="{{ $imgPath }}" alt="{{ $produk->name ?? $produk->nama }}" 
+                                    class="w-full h-full object-cover" 
+                                    onerror="this.src='{{ asset('uploads/default.png') }}'">
                             </div>
-                            <div class="p-3">
-                                <h3 class="font-medium text-sm text-gray-800 truncate mb-2">
-                                    {{ $produk->name ?? ucfirst($kategoriProduk) }}
+                            
+                            <div class="p-4 flex flex-col flex-1">
+                                <h3 class="font-semibold text-gray-800 truncate mb-2">
+                                    {{ $produk->name ?? $produk->nama ?? ucfirst($kategoriProduk) }}
                                 </h3>
-                                <p class="text-xs text-gray-500 mb-1">Jenis:
-                                    @if (isset($produk->type_goat))
-                                        {{ $produk->type_goat ?? '-' }}
-                                    @elseif (isset($produk->type_domba))
-                                        {{ $produk->type_domba ?? '-' }}
-                                    @else
-                                        -
-                                    @endif
-                                </p>
-                                <p class="text-xs text-gray-500 mb-2">
-                                    Berat: {{ $produk->weight_now ? $produk->weight_now . ' kg' : '-' }}
-                                </p>
-                                <p class="text-sm font-semibold text-gray-900 mt-1">
-                                    Rp{{ number_format($produk->harga ?? 0, 0, ',', '.') }}
-                                </p>
-                                <div class="flex items-center text-sm gap-1.5 text-gray-600 mt-2">
-                                    @if (($produk->jenis_kelamin ?? null) === 'Jantan')
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                            fill="currentColor" class="bi bi-gender-male" viewBox="0 0 16 16">
-                                            <path fill-rule="evenodd"
-                                                d="M9.5 2a.5.5 0 0 1 0-1h5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-1 0V2.707L9.871 6.836a5 5 0 1 1-.707-.707L13.293 2zM6 6a4 4 0 1 0 0 8 4 4 0 0 0 0-8" />
-                                        </svg>
-                                        <p>{{ $produk->jenis_kelamin ?? '-' }}</p>
-                                    @elseif (($produk->jenis_kelamin ?? null) === 'Betina')
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                            fill="currentColor" class="bi bi-gender-female" viewBox="0 0 16 16">
-                                            <path fill-rule="evenodd"
-                                                d="M8 1a4 4 0 1 0 0 8 4 4 0 0 0 0-8M3 5a5 5 0 1 1 5.5 4.975V12h2a.5.5 0 0 1 0 1h-2v2.5a.5.5 0 0 1-1 0V13h-2a.5.5 0 0 1 0-1h2V9.975A5 5 0 0 1 3 5" />
-                                        </svg>
-                                        <p>{{ $produk->jenis_kelamin ?? '-' }}</p>
-                                    @else
-                                        <p>-</p>
-                                    @endif
-                                </div>
-                                @if($isPending)
-                                    <div class="mt-3">
-                                        <button disabled 
-                                            class="w-full text-center text-sm px-3 py-1.5 rounded bg-orange-100 text-gray-600 cursor-not-allowed">
-                                            Sedang Diproses
-                                        </button>
+                                
+                                @if($isTernak)
+                                    {{-- Info khusus Ternak --}}
+                                    <p class="text-xs text-gray-500 mb-1">Jenis: {{ $produk->type_goat ?? $produk->type_domba ?? '-' }}</p>
+                                    <p class="text-xs text-gray-500 mb-2">Berat: {{ $produk->weight_now ? $produk->weight_now . ' kg' : '-' }}</p>
+                                    <div class="flex items-center text-sm gap-1.5 text-gray-600 mb-2">
+                                        @if (($produk->jenis_kelamin ?? null) === 'Jantan')
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-gender-male" viewBox="0 0 16 16">
+                                                <path fill-rule="evenodd" d="M9.5 2a.5.5 0 0 1 0-1h5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-1 0V2.707L9.871 6.836a5 5 0 1 1-.707-.707L13.293 2zM6 6a4 4 0 1 0 0 8 4 4 0 0 0 0-8" />
+                                            </svg>
+                                        @elseif (($produk->jenis_kelamin ?? null) === 'Betina')
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-gender-female" viewBox="0 0 16 16">
+                                                <path fill-rule="evenodd" d="M8 1a4 4 0 1 0 0 8 4 4 0 0 0 0-8M3 5a5 5 0 1 1 5.5 4.975V12h2a.5.5 0 0 1 0 1h-2v2.5a.5.5 0 0 1-1 0V13h-2a.5.5 0 0 1 0-1h2V9.975A5 5 0 0 1 3 5" />
+                                            </svg>
+                                        @endif
+                                        <p class="text-xs">{{ $produk->jenis_kelamin ?? '-' }}</p>
                                     </div>
                                 @else
-                                    <div class="mt-3">
-                                        <a href="{{ route('order.show', [
-                                            'category' => isset($produk->type_goat) ? 'kambing' : (isset($produk->type_domba) ? 'domba' : 'produk'),
-                                            'id' => $produk->id,
-                                        ]) }}"
-                                            class="block text-center text-white text-sm bg-brand-orange hover:bg-orange-700 px-3 py-1.5 rounded">
+                                    {{-- Info khusus Produk (Pakan/Obat) --}}
+                                    <p class="text-xs text-gray-500 mb-1">Tipe: {{ ucfirst($produk->type) }}</p>
+                                    <p class="text-xs text-gray-500 mb-1">Kode: {{ $produk->kode }}</p>
+                                    <p class="text-xs text-orange-600 font-bold mb-2">Tersedia: {{ $stokTersedia }} unit</p>
+                                @endif
+
+                                <div class="mt-auto pt-3 border-t border-gray-100">
+                                    <p class="text-sm font-bold text-gray-900 mb-3">
+                                        Rp {{ number_format($produk->harga ?? 0, 0, ',', '.') }}
+                                    </p>
+                                    
+                                    @if($isPending)
+                                        <button disabled class="w-full text-center text-sm px-3 py-2 rounded-lg bg-orange-100 text-gray-600 font-medium cursor-not-allowed">
+                                            Sedang Diproses
+                                        </button>
+                                    @else
+                                        @php
+                                            $catRoute = strtolower($modelType) === 'product' ? 'product' : strtolower($modelType);
+                                        @endphp
+                                        <a href="{{ route('order.show', ['category' => $catRoute, 'id' => $produk->id]) }}"
+                                            class="block w-full text-center text-white text-sm bg-brand-orange hover:bg-orange-700 px-3 py-2 rounded-lg font-semibold transition-colors shadow-sm">
                                             Beli
                                         </a>
-                                    </div>
-                                @endif
+                                    @endif
+                                </div>
                             </div>
                         </div>
                     @empty
                         <div class="col-span-full text-center text-gray-500 py-10">
-                            Tidak ada produk ditemukan.
+                            Tidak ada produk yang tersedia.
                         </div>
                     @endforelse
                 </div>
 
-                <!-- Pagination -->
                 <div class="mt-10 flex justify-center p-4">
-                    @if ($kategoriProduk === 'kambing')
+                    @if ($kategoriProduk === 'kambing' && method_exists($kambings, 'links'))
                         {{ $kambings->appends(request()->query())->links() }}
-                    @elseif ($kategoriProduk === 'domba')
+                    @elseif ($kategoriProduk === 'domba' && method_exists($dombas, 'links'))
                         {{ $dombas->appends(request()->query())->links() }}
-                    @else
-                        @if ($kambings->count() > 0)
-                            {{ $kambings->appends(request()->query())->links() }}
-                            <!-- Tampilkan pagination untuk kambing -->
-                        @endif
-                        @if ($dombas->count() > 0)
-                            {{ $dombas->appends(request()->query())->links() }}
-                            <!-- Tampilkan pagination untuk domba -->
-                        @endif
                     @endif
                 </div>
             </section>

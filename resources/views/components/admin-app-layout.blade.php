@@ -224,308 +224,197 @@
                                         </div>
                                     </form>
                                 </li> --}}
-                                <li class="flex ">
-                                    <a href="#"
-                                        class="text-base text-gray-900 font-normal rounded-lg flex items-center p-2 hover:bg-gray-100 group">
-                                        {{-- <svg class="w-6 h-6 text-brand-orange group-hover:text-gray-900 transition duration-75"
-                                            fill="currentColor" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg">
-                                            <path fill-rule="evenodd"
-                                                d="M11.293 3.293a1 1 0 0 1 1.414 0l6 6 2 2a1 1 0 0 1-1.414 1.414L19 12.414V19a2 2 0 0 1-2 2h-3a1 1 0 0 1-1-1v-3h-2v3a1 1 0 0 1-1 1H7a2 2 0 0 1-2-2v-6.586l-.293.293a1 1 0 0 1-1.414-1.414l2-2 6-6Z"
-                                                clip-rule="evenodd" />
-                                        </svg> --}}
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                                            class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75"
-                                            viewBox="0 0 16 16">
-                                            <path
-                                                d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5z" />
-                                        </svg>
-                                        <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')" >
-                                            {{ __('Dashboard') }}
-                                        </x-responsive-nav-link>
-                                    </a>
-                                </li>
+                               <ul class="space-y-2 pb-2 py-2">
 
-                                <li class="flex">
-                                    <a href="#"
-                                        class="text-base text-gray-900 font-normal rounded-lg flex items-center p-2 hover:bg-gray-100 group">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                                            class="bi bi-file-earmark-person w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75"
-                                            viewBox="0 0 16 16">
-                                            <path d="M11 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0" />
-                                            <path
-                                                d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2v9.255S12 12 8 12s-5 1.755-5 1.755V2a1 1 0 0 1 1-1h5.5z" />
-                                        </svg>
+    {{-- Menu Dashboard --}}
+    <li>
+        <a href="{{ route('admin.dashboard') }}"
+            class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 group w-full {{ request()->routeIs('admin.dashboard') ? 'bg-gray-100' : '' }}">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75" viewBox="0 0 16 16">
+                <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293zM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5z" />
+            </svg>
+            <span class="ml-3 flex-1 whitespace-nowrap">{{ __('Dashboard') }}</span>
+        </a>
+    </li>
 
-                                        <x-responsive-nav-link :href="route('admin.penitip')" :active="request()->routeIs('admin.penitip')">
-                                            {{ __('Pengguna') }}
-                                        </x-responsive-nav-link>
-                                    </a>
-                                </li>
+    {{-- Menu Pengguna --}}
+    <li>
+        <a href="{{ route('admin.penitip') }}"
+            class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 group w-full {{ request()->routeIs('admin.penitip') ? 'bg-gray-100' : '' }}">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75" viewBox="0 0 16 16">
+                <path d="M11 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0" />
+                <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2v9.255S12 12 8 12s-5 1.755-5 1.755V2a1 1 0 0 1 1-1h5.5z" />
+            </svg>
+            <span class="ml-3 flex-1 whitespace-nowrap">{{ __('Pengguna') }}</span>
+        </a>
+    </li>
 
-                                <li class="relative" x-data="{ open: {{ request()->routeIs('admin.tambahkambing') || request()->routeIs('admin.tambahdomba') ? 'true' : 'false' }} }">
-                                    <!-- Main Button -->
-                                    <button @click="open = !open"
-                                        class="w-full text-gray-600 font-medium rounded-lg flex items-center justify-between p-2 hover:bg-gray-100 group {{ request()->routeIs('admin.tambahkambing') || request()->routeIs('admin.tambahdomba') ? 'border-l-4 border-orange-400 bg-orange-50 text-orange-700' : '' }}">
-                                        <span class="flex items-center">
-                                            <span
-                                                class="border-l-4 border-transparent {{ request()->routeIs('admin.tambahkambing') || request()->routeIs('admin.tambahdomba') ? 'border-indigo-400' : '' }} pr-2">
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                                                    class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75"
-                                                    viewBox="0 0 16 16">
-                                                    <path
-                                                        d="m.5 3 .04.87a2 2 0 0 0-.342 1.311l.637 7A2 2 0 0 0 2.826 14H9v-1H2.826a1 1 0 0 1-.995-.91l-.637-7A1 1 0 0 1 2.19 4h11.62a1 1 0 0 1 .996 1.09L14.54 8h1.005l.256-2.819A2 2 0 0 0 13.81 3H9.828a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 6.172 1H2.5a2 2 0 0 0-2 2m5.672-1a1 1 0 0 1 .707.293L7.586 3H2.19q-.362.002-.683.12L1.5 2.98a1 1 0 0 1 1-.98z" />
-                                                    <path
-                                                        d="M13.5 9a.5.5 0 0 1 .5.5V11h1.5a.5.5 0 1 1 0 1H14v1.5a.5.5 0 1 1-1 0V12h-1.5a.5.5 0 0 1 0-1H13V9.5a.5.5 0 0 1 .5-.5" />
-                                                </svg>
-                                            </span>
-                                            <span class="ml-2 group-hover:text-gray-800">Tambah</span>
-                                        </span>
-                                        <svg class="w-4 h-4 text-gray-500 transition-transform duration-200 transform"
-                                            :class="{ 'rotate-180': open }" fill="none" stroke="currentColor"
-                                            stroke-width="2" viewBox="0 0 24 24">
-                                            <path d="M19 9l-7 7-7-7"></path>
-                                        </svg>
-                                    </button>
+    {{-- Menu Dropdown Tambah --}}
+    <li class="relative" x-data="{ open: {{ request()->routeIs('admin.tambahkambing') || request()->routeIs('admin.tambahdomba') || request()->routeIs('admin.materials.create') || request()->routeIs('admin.products.create') || request()->routeIs('admin.suppliers.create') ? 'true' : 'false' }} }">
+        <button @click="open = !open"
+            class="flex items-center justify-between p-2 w-full text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 group {{ request()->routeIs('admin.tambahkambing') || request()->routeIs('admin.tambahdomba') ? 'bg-gray-100' : '' }}">
+            <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75" viewBox="0 0 16 16">
+                    <path d="m.5 3 .04.87a2 2 0 0 0-.342 1.311l.637 7A2 2 0 0 0 2.826 14H9v-1H2.826a1 1 0 0 1-.995-.91l-.637-7A1 1 0 0 1 2.19 4h11.62a1 1 0 0 1 .996 1.09L14.54 8h1.005l.256-2.819A2 2 0 0 0 13.81 3H9.828a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 6.172 1H2.5a2 2 0 0 0-2 2m5.672-1a1 1 0 0 1 .707.293L7.586 3H2.19q-.362.002-.683.12L1.5 2.98a1 1 0 0 1 1-.98z" />
+                    <path d="M13.5 9a.5.5 0 0 1 .5.5V11h1.5a.5.5 0 1 1 0 1H14v1.5a.5.5 0 1 1-1 0V12h-1.5a.5.5 0 0 1 0-1H13V9.5a.5.5 0 0 1 .5-.5" />
+                </svg>
+                <span class="ml-3 text-left whitespace-nowrap">Tambah</span>
+            </div>
+            <svg class="w-4 h-4 text-gray-500 transition-transform duration-200 transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </button>
+        <ul x-show="open" @click.away="open = false" x-transition x-cloak class="mt-2 bg-white shadow-lg rounded-md w-full z-10 overflow-hidden">
+            <li>
+                <a href="{{ route('admin.tambahkambing') }}" class="block w-full pl-11 pr-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('admin.tambahkambing') ? 'bg-orange-50 text-brand-orange font-medium' : '' }}">Kambing</a>
+            </li>
+            <li>
+                <a href="{{ route('admin.tambahdomba') }}" class="block w-full pl-11 pr-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('admin.tambahdomba') ? 'bg-orange-50 text-brand-orange font-medium' : '' }}">Domba</a>
+            </li>
+            <li>
+                <a href="{{ route('admin.materials.create') }}" class="block w-full pl-11 pr-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('admin.materials.create') ? 'bg-orange-50 text-brand-orange font-medium' : '' }}">Material</a>
+            </li>
+            <li>
+                <a href="{{ route('admin.products.create') }}" class="block w-full pl-11 pr-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('admin.products.create') ? 'bg-orange-50 text-brand-orange font-medium' : '' }}">Produk</a>
+            </li>
+            <li>
+                <a href="{{ route('admin.suppliers.create') }}" class="block w-full pl-11 pr-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('admin.suppliers.create') ? 'bg-orange-50 text-brand-orange font-medium' : '' }}">Supplier</a>
+            </li>
+        </ul>
+    </li>
 
-                                    <!-- Dropdown -->
-                                    <ul x-show="open" @click.away="open = false" x-transition x-cloak
-                                        class="mt-2 bg-white shadow-lg rounded-md w-full z-10">
-                                        <li>
-                                            <x-responsive-nav-link href="{{ route('admin.tambahkambing') }}"
-                                                class="{{ request()->routeIs('admin.tambahkambing') ? 'block w-full ps-3 pe-4 py-2 border-indigo-400 text-start text-base font-medium text-orange-700 bg-orange-50 focus:outline-none focus:text-orange-800 focus:bg-orange-100 focus:border-orange-700 transition duration-150 ease-in-out' : 'block w-full ps-3 pe-4 py-2 border-transparent text-start text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:text-gray-800 focus:bg-gray-50 focus:border-gray-300 transition duration-150 ease-in-out' }}"
-                                                @click="if (!{{ request()->routeIs('admin.tambahkambing') }}) { open = false; }">
-                                                Kambing
-                                            </x-responsive-nav-link>
-                                        </li>
-                                        <li>
-                                            <x-responsive-nav-link href="{{ route('admin.tambahdomba') }}"
-                                                class="{{ request()->routeIs('admin.tambahdomba') ? 'block w-full ps-3 pe-4 py-2 border-indigo-400 text-start text-base font-medium text-orange-700 bg-orange-50 focus:outline-none focus:text-orange-800 focus:bg-orange-100 focus:border-orange-700 transition duration-150 ease-in-out' : 'block w-full ps-3 pe-4 py-2 border-transparent text-start text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:text-gray-800 focus:bg-gray-50 focus:border-gray-300 transition duration-150 ease-in-out' }}"
-                                                @click="if (!{{ request()->routeIs('admin.tambahdomba') }}) { open = false; }">
-                                                Domba
-                                            </x-responsive-nav-link>
-                                        </li>
-                                         <li>
-                                            <x-responsive-nav-link href="{{ route('admin.materials.create') }}"
-                                                class="{{ request()->routeIs('admin.materials.create') ? 'block w-full ps-3 pe-4 py-2 border-indigo-400 text-start text-base font-medium text-orange-700 bg-orange-50 focus:outline-none focus:text-orange-800 focus:bg-orange-100 focus:border-orange-700 transition duration-150 ease-in-out' : 'block w-full ps-3 pe-4 py-2 border-transparent text-start text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:text-gray-800 focus:bg-gray-50 focus:border-gray-300 transition duration-150 ease-in-out' }}"
-                                                @click="if (!{{ request()->routeIs('admin.materials.create') }}) { open = false; }">
-                                                Material
-                                            </x-responsive-nav-link>
-                                        </li>
-                                         <li>
-                                            <x-responsive-nav-link href="{{ route('admin.products.create') }}"
-                                                class="{{ request()->routeIs('admin.products.create') ? 'block w-full ps-3 pe-4 py-2 border-indigo-400 text-start text-base font-medium text-orange-700 bg-orange-50 focus:outline-none focus:text-orange-800 focus:bg-orange-100 focus:border-orange-700 transition duration-150 ease-in-out' : 'block w-full ps-3 pe-4 py-2 border-transparent text-start text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:text-gray-800 focus:bg-gray-50 focus:border-gray-300 transition duration-150 ease-in-out' }}"
-                                                @click="if (!{{ request()->routeIs('admin.products.create') }}) { open = false; }">
-                                                Produk
-                                            </x-responsive-nav-link>
-                                        </li>
-                                        <li>
-                                            <x-responsive-nav-link href="{{ route('admin.suppliers.create') }}"
-                                                class="{{ request()->routeIs('admin.suppliers.create') ? 'block w-full ps-3 pe-4 py-2 border-indigo-400 text-start text-base font-medium text-orange-700 bg-orange-50 focus:outline-none focus:text-orange-800 focus:bg-orange-100 focus:border-orange-700 transition duration-150 ease-in-out' : 'block w-full ps-3 pe-4 py-2 border-transparent text-start text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:text-gray-800 focus:bg-gray-50 focus:border-gray-300 transition duration-150 ease-in-out' }}"
-                                                @click="if (!{{ request()->routeIs('admin.suppliers.create') }}) { open = false; }">
-                                                Supplier
-                                            </x-responsive-nav-link>
-                                        </li>
-  
-                                    </ul>
-                                </li>
+    {{-- Menu Dropdown Master Data --}}
+    <li class="relative" x-data="{ open: {{ request()->routeIs('admin.listkambing') || request()->routeIs('admin.listdomba') || request()->routeIs('admin.materials.index') || request()->routeIs('admin.products.index') || request()->routeIs('admin.suppliers.index') ? 'true' : 'false' }} }">
+        <button @click="open = !open"
+            class="flex items-center justify-between p-2 w-full text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 group {{ request()->routeIs('admin.listkambing') || request()->routeIs('admin.listdomba') ? 'bg-gray-100' : '' }}">
+            <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75" viewBox="0 0 16 16">
+                    <path d="M.54 3.87.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.826a2 2 0 0 1-1.991-1.819l-.637-7a2 2 0 0 1 .342-1.31zM2.19 4a1 1 0 0 0-.996 1.09l.637 7a1 1 0 0 0 .995.91h10.348a1 1 0 0 0 .995-.91l.637-7A1 1 0 0 0 13.81 4zm4.69-1.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139q.323-.119.684-.12h5.396z" />
+                </svg>
+                <span class="ml-3 text-left whitespace-nowrap">Master Data</span>
+            </div>
+            <svg class="w-4 h-4 text-gray-500 transition-transform duration-200 transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </button>
+        <ul x-show="open" @click.away="open = false" x-transition x-cloak class="mt-2 bg-white shadow-lg rounded-md w-full z-10 overflow-hidden">
+            <li>
+                <a href="{{ route('admin.listkambing') }}" class="block w-full pl-11 pr-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('admin.listkambing') ? 'bg-orange-50 text-brand-orange font-medium' : '' }}">Kambing</a>
+            </li>
+            <li>
+                <a href="{{ route('admin.listdomba') }}" class="block w-full pl-11 pr-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('admin.listdomba') ? 'bg-orange-50 text-brand-orange font-medium' : '' }}">Domba</a>
+            </li>
+            <li>
+                <a href="{{ route('admin.materials.index') }}" class="block w-full pl-11 pr-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('admin.materials.index') ? 'bg-orange-50 text-brand-orange font-medium' : '' }}">Material</a>
+            </li>
+            <li>
+                <a href="{{ route('admin.products.index') }}" class="block w-full pl-11 pr-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('admin.products.index') ? 'bg-orange-50 text-brand-orange font-medium' : '' }}">Produk</a>
+            </li>
+            <li>
+                <a href="{{ route('admin.suppliers.index') }}" class="block w-full pl-11 pr-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('admin.suppliers.index') ? 'bg-orange-50 text-brand-orange font-medium' : '' }}">Supplier</a>
+            </li>
+        </ul>
+    </li>
 
-                                <li class="relative" x-data="{ open: {{ request()->routeIs('admin.listkambing') || request()->routeIs('admin.listdomba') || request()->routeIs('admin.kambing.show') || request()->routeIs('admin.domba.show') || request()->routeIs('admin.kambings.update') || request()->routeIs('admin.dombas.update') ? 'true' : 'false' }} }">
-                                    <!-- Main Button -->
-                                    <button @click="open = !open"
-                                        class="w-full text-gray-600 font-medium rounded-lg flex items-center justify-between p-2 hover:bg-gray-100 group {{ request()->routeIs('admin.listkambing') || request()->routeIs('admin.listdomba') || request()->routeIs('admin.kambing.show') || request()->routeIs('admin.domba.show') || request()->routeIs('admin.kambings.update') || request()->routeIs('admin.dombas.update') ? 'border-l-4 border-orange-400 bg-orange-50 text-orange-700' : '' }}">
-                                        <span class="flex items-center">
-                                            <span
-                                                class="border-l-4 border-transparent {{ request()->routeIs('admin.listkambing') || request()->routeIs('admin.listdomba') ? 'border-indigo-400' : '' }} pr-2">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                    fill="currentColor"
-                                                    class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75"
-                                                    viewBox="0 0 16 16">
-                                                    <path
-                                                        d="M.54 3.87.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.826a2 2 0 0 1-1.991-1.819l-.637-7a2 2 0 0 1 .342-1.31zM2.19 4a1 1 0 0 0-.996 1.09l.637 7a1 1 0 0 0 .995.91h10.348a1 1 0 0 0 .995-.91l.637-7A1 1 0 0 0 13.81 4zm4.69-1.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139q.323-.119.684-.12h5.396z" />
-                                                </svg>
-                                            </span>
-                                            <span class="ml-2 group-hover:text-gray-800">Master Data</span>
-                                        </span>
-                                        <svg class="w-4 h-4 text-gray-500 transition-transform duration-200 transform"
-                                            :class="{ 'rotate-180': open }" fill="none" stroke="currentColor"
-                                            stroke-width="2" viewBox="0 0 24 24">
-                                            <path d="M19 9l-7 7-7-7"></path>
-                                        </svg>
-                                    </button>
+    {{-- Menu Penjualan --}}
+    <li>
+        <a href="{{ route('admin.penjualan') }}"
+            class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 group w-full {{ request()->routeIs('admin.penjualan*') ? 'bg-gray-100' : '' }}">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+            <span class="ml-3 flex-1 whitespace-nowrap">{{ __('Penjualan') }}</span>
+        </a>
+    </li>
 
-                                    <!-- Dropdown -->
-                                    <ul x-show="open" @click.away="open = false" x-transition x-cloak
-                                        class="mt-2 bg-white shadow-lg rounded-md w-full z-10">
-                                        <li>
-                                            <x-responsive-nav-link href="{{ route('admin.listkambing') }}"
-                                                class="{{ request()->routeIs('admin.listkambing') || request()->routeIs('admin.kambing.show') || request()->routeIs('admin.kambings.update') ? 'block w-full ps-3 pe-4 py-2 border-indigo-400 text-start text-base font-medium text-orange-700 bg-orange-50 focus:outline-none focus:text-orange-800 focus:bg-orange-100 focus:border-orange-700 transition duration-150 ease-in-out' : 'block w-full ps-3 pe-4 py-2 border-transparent text-start text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:text-gray-800 focus:bg-gray-50 focus:border-gray-300 transition duration-150 ease-in-out' }}"
-                                                @click="if (!{{ request()->routeIs('admin.listkambing') }}) { open = false; }">
-                                                Kambing
-                                            </x-responsive-nav-link>
-                                        </li>
-                                        <li>
-                                            <x-responsive-nav-link href="{{ route('admin.listdomba') }}"
-                                                class="{{ request()->routeIs('admin.listdomba') || request()->routeIs('admin.domba.show') || request()->routeIs('admin.dombas.update') ? 'block w-full ps-3 pe-4 py-2 border-indigo-400 text-start text-base font-medium text-orange-700 bg-orange-50 focus:outline-none focus:text-orange-800 focus:bg-orange-100 focus:border-orange-700 transition duration-150 ease-in-out' : 'block w-full ps-3 pe-4 py-2 border-transparent text-start text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:text-gray-800 focus:bg-gray-50 focus:border-gray-300 transition duration-150 ease-in-out' }}"
-                                                @click="if (!{{ request()->routeIs('admin.listdomba') || request()->routeIs('admin.domba.show') || request()->routeIs('admin.dombas.update') }}) { open = false; }">
-                                                Domba
-                                            </x-responsive-nav-link>
-                                        </li>
-                                         <li>
-                                            <x-responsive-nav-link href="{{ route('admin.materials.index') }}"
-                                                class="{{ request()->routeIs('admin.materials.index') ? 'block w-full ps-3 pe-4 py-2 border-indigo-400 text-start text-base font-medium text-orange-700 bg-orange-50 focus:outline-none focus:text-orange-800 focus:bg-orange-100 focus:border-orange-700 transition duration-150 ease-in-out' : 'block w-full ps-3 pe-4 py-2 border-transparent text-start text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:text-gray-800 focus:bg-gray-50 focus:border-gray-300 transition duration-150 ease-in-out' }}"
-                                                @click="if (!{{ request()->routeIs('admin.materials.index') }}) { open = false; }">
-                                                Material
-                                            </x-responsive-nav-link>
-                                        </li>
-                                         <li>
-                                            <x-responsive-nav-link href="{{ route('admin.products.index') }}"
-                                                class="{{ request()->routeIs('admin.products.index') ? 'block w-full ps-3 pe-4 py-2 border-indigo-400 text-start text-base font-medium text-orange-700 bg-orange-50 focus:outline-none focus:text-orange-800 focus:bg-orange-100 focus:border-orange-700 transition duration-150 ease-in-out' : 'block w-full ps-3 pe-4 py-2 border-transparent text-start text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:text-gray-800 focus:bg-gray-50 focus:border-gray-300 transition duration-150 ease-in-out' }}"
-                                                @click="if (!{{ request()->routeIs('admin.products.index') }}) { open = false; }">
-                                                Produk
-                                            </x-responsive-nav-link>
-                                        </li>
-                                         <li>
-                                            <x-responsive-nav-link href="{{ route('admin.suppliers.index') }}"
-                                                class="{{ request()->routeIs('admin.suppliers.index') ? 'block w-full ps-3 pe-4 py-2 border-indigo-400 text-start text-base font-medium text-orange-700 bg-orange-50 focus:outline-none focus:text-orange-800 focus:bg-orange-100 focus:border-orange-700 transition duration-150 ease-in-out' : 'block w-full ps-3 pe-4 py-2 border-transparent text-start text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:text-gray-800 focus:bg-gray-50 focus:border-gray-300 transition duration-150 ease-in-out' }}"
-                                                @click="if (!{{ request()->routeIs('admin.suppliers.index') }}) { open = false; }">
-                                                Supplier
-                                            </x-responsive-nav-link>
-                                        </li>
+    {{-- Menu Pengaturan --}}
+    <li>
+        <a href="{{ route('admin.site-settings.edit') }}"
+            class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 group w-full {{ request()->routeIs('admin.site-settings.edit') ? 'bg-gray-100' : '' }}">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75" viewBox="0 0 16 16">
+                <path d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1z" />
+            </svg>
+            <span class="ml-3 flex-1 whitespace-nowrap">{{ __('Pengaturan') }}</span>
+        </a>
+    </li>
 
-                                    </ul>
-                                </li>
+    {{-- Menu Pemesanan Bahan --}}
+    <li>
+        <a href="{{ route('admin.purchase-orders.index') }}"
+            class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 group w-full {{ request()->routeIs('admin.purchase-orders.*') ? 'bg-gray-100' : '' }}">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75" viewBox="0 0 16 16">
+                <path d="M0 1.5A.5.5 0 0 1 .5 1h15a.5.5 0 0 1 0 1H.5A.5.5 0 0 1 0 1.5zM1 4h14v10H1V4zm1 1v8h12V5H2z"/>
+            </svg>
+            <span class="ml-3 flex-1 whitespace-nowrap">{{ __('Pemesanan Bahan') }}</span>
+        </a>
+    </li>
 
-                                {{-- <li class="flex">
-                                    <a href="#"
-                                        class="text-base text-gray-900 font-normal rounded-lg flex items-center p-2 hover:bg-gray-100 group">
-                                        <svg class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75"
-                                            fill="currentColor" viewBox="0 0 16 16"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <path
-                                                d="m8 0 6.61 3h.89a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H15v7a.5.5 0 0 1 .485.38l.5 2a.498.498 0 0 1-.485.62H.5a.498.498 0 0 1-.485-.62l.5-2A.5.5 0 0 1 1 13V6H.5a.5.5 0 0 1-.5-.5v-2A.5.5 0 0 1 .5 3h.89zM3.777 3h8.447L8 1zM2 6v7h1V6zm2 0v7h2.5V6zm3.5 0v7h1V6zm2 0v7H12V6zM13 6v7h1V6zm2-1V4H1v1zm-.39 9H1.39l-.25 1h13.72z" />
-                                        </svg>
-                                        <x-responsive-nav-link :href="route('admin.perjanjian')" :active="request()->routeIs('admin.perjanjian')">
-                                            {{ __('Perjanjian') }}
-                                        </x-responsive-nav-link>
-                                    </a>
-                                </li> --}}
-                                <li class="flex">
-                                    <a href="#"
-                                        class="text-base text-gray-900 font-normal rounded-lg flex items-center p-2 hover:bg-gray-100 group">
-                                        <svg class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75"
-                                            fill="currentColor" viewBox="0 0 16 16"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M1.92.506a.5.5 0 0 1 .434.14L3 1.293l.646-.647a.5.5 0 0 1 .708 0L5 1.293l.646-.647a.5.5 0 0 1 .708 0L7 1.293l.646-.647a.5.5 0 0 1 .708 0L9 1.293l.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .801.13l.5 1A.5.5 0 0 1 15 2v12a.5.5 0 0 1-.053.224l-.5 1a.5.5 0 0 1-.8.13L13 14.707l-.646.647a.5.5 0 0 1-.708 0L11 14.707l-.646.647a.5.5 0 0 1-.708 0L9 14.707l-.646.647a.5.5 0 0 1-.708 0L7 14.707l-.646.647a.5.5 0 0 1-.708 0L5 14.707l-.646.647a.5.5 0 0 1-.708 0L3 14.707l-.646.647a.5.5 0 0 1-.801-.13l-.5-1A.5.5 0 0 1 1 14V2a.5.5 0 0 1 .053-.224l.5-1a.5.5 0 0 1 .367-.27m.217 1.338L2 2.118v11.764l.137.274.51-.51a.5.5 0 0 1 .707 0l.646.647.646-.646a.5.5 0 0 1 .708 0l.646.646.646-.646a.5.5 0 0 1 .708 0l.646.646.646-.646a.5.5 0 0 1 .708 0l.646.646.646-.646a.5.5 0 0 1 .708 0l.646.646.646-.646a.5.5 0 0 1 .708 0l.509.509.137-.274V2.118l-.137-.274-.51.51a.5.5 0 0 1-.707 0L12 1.707l-.646.647a.5.5 0 0 1-.708 0L10 1.707l-.646.647a.5.5 0 0 1-.708 0L8 1.707l-.646.647a.5.5 0 0 1-.708 0L6 1.707l-.646.647a.5.5 0 0 1-.708 0L4 1.707l-.646.647a.5.5 0 0 1-.708 0z"/>
-  <path d="M3 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 1 1 0 1h-6a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5m8-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5m0 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5"/>
-                                        </svg>
-                                        <x-responsive-nav-link :href="route('admin.penjualan')" :active="request()->routeIs('admin.penjualan')">
-                                            {{ __('Penjualan') }}
-                                        </x-responsive-nav-link>
-                                    </a>
-                                </li>
-                                <li class="flex">
-                                    <a href="#"
-                                        class="text-base text-gray-900 font-normal rounded-lg flex items-center p-2 hover:bg-gray-100 group">
-                                        <svg class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75"
-                                            fill="currentColor" viewBox="0 0 16 16"
-                                            xmlns="http://www.w3.org/2000/svg">
-                                            <path stroke="currentColor" stroke-linecap="round"
-                                                stroke-linejoin="round" stroke-width="1"
-                                                d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1z" />
-                                        </svg>
-                                        <x-responsive-nav-link :href="route('admin.site-settings.edit')" :active="request()->routeIs('admin.site-settings.edit')">
-                                            {{ __('Pengaturan') }}
-                                        </x-responsive-nav-link>
-                                    </a>
-                                </li>
+    {{-- Menu Inventori Bahan --}}
+    <li>
+        <a href="{{ route('admin.material.index') }}"
+            class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 group w-full {{ request()->routeIs('admin.material.*') ? 'bg-gray-100' : '' }}">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75" viewBox="0 0 16 16">
+                <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2zm3.564 1.426L5.596 5 8 5.961 14.154 3.5zm.325 1.483L5.15 6.443v4.385L12.075 8.31V4.022zM4.15 6.443 1.075 5.212v3.098l2.903 1.162zm.174 5.376 3.162 1.265a.5.5 0 0 0 .372 0L11 11.819V9.567L8.186 10.693a.5.5 0 0 1-.372 0L4.324 9.567zM1.075 9.424v3.098l2.903-1.162V8.262z"/>
+            </svg>
+            <span class="ml-3 flex-1 whitespace-nowrap">{{ __('Inventori Bahan') }}</span>
+        </a>
+    </li>
 
-                                <li class="flex">
-    <a href="#"
-        class="text-base text-gray-900 font-normal rounded-lg flex items-center p-2 hover:bg-gray-100 group">
-        
-        <svg xmlns="http://www.w3.org/2000/svg"
-            class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75"
-            fill="currentColor"
-            viewBox="0 0 16 16">
-            <path d="M0 1.5A.5.5 0 0 1 .5 1h15a.5.5 0 0 1 0 1H.5A.5.5 0 0 1 0 1.5zM1 4h14v10H1V4zm1 1v8h12V5H2z"/>
-        </svg>
+    {{-- Menu Resep Produksi --}}
+    <li>
+        <a href="{{ route('admin.formula.index') }}"
+            class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 group w-full {{ request()->routeIs('admin.formula.*') ? 'bg-gray-100' : '' }}">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            <span class="ml-3 flex-1 whitespace-nowrap">{{ __('Resep Produksi') }}</span>
+        </a>
+    </li>
 
-        <x-responsive-nav-link 
-            :href="route('admin.purchase-orders.index')" 
-            :active="request()->routeIs('admin.purchase-orders.*')">
-            {{ __('Pemesanan Bahan') }}
-        </x-responsive-nav-link>
-    </a>
-</li>
+    {{-- Menu Proses Produksi --}}
+    <li>
+        <a href="{{ route('admin.productions.index') }}"
+            class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 group w-full {{ request()->routeIs('admin.productions.*') ? 'bg-gray-100' : '' }}">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 01-.586 1.414l-5 5c-.126.126-.269.246-.426.353" />
+            </svg>
+            <span class="ml-3 flex-1 whitespace-nowrap">{{ __('Proses Produksi') }}</span>
+        </a>
+    </li>
 
-{{-- Menu Inventori Bahan --}}
-<li class="flex">
-    <a href="{{ route('admin.material.index') }}"
-        class="text-base text-gray-900 font-normal rounded-lg flex items-center p-2 hover:bg-gray-100 group w-full {{ request()->routeIs('admin.material.*') ? 'bg-gray-100' : '' }}">
-        
-        <svg xmlns="http://www.w3.org/2000/svg" 
-            class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75" 
-            fill="currentColor" 
-            viewBox="0 0 16 16">
-            <path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5l2.404.961L10.404 2zm3.564 1.426L5.596 5 8 5.961 14.154 3.5zm.325 1.483L5.15 6.443v4.385L12.075 8.31V4.022zM4.15 6.443 1.075 5.212v3.098l2.903 1.162zm.174 5.376 3.162 1.265a.5.5 0 0 0 .372 0L11 11.819V9.567L8.186 10.693a.5.5 0 0 1-.372 0L4.324 9.567zM1.075 9.424v3.098l2.903-1.162V8.262z"/>
-        </svg>
+    {{-- Menu Inventori Produk --}}
+    <li>
+        <a href="{{ route('admin.inventory.product.index') }}"
+            class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 group w-full {{ request()->routeIs('admin.inventory.product.*') ? 'bg-gray-100' : '' }}">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75" viewBox="0 0 16 16">
+                <path d="M7.752.066a.5.5 0 0 1 .496 0l3.75 2.143a.5.5 0 0 1 .252.434v3.995l3.498 2a.5.5 0 0 1 .252.434v3.995a.5.5 0 0 1-.252.434l-3.75 2.143a.5.5 0 0 1-.496 0l-3.502-2-3.502 2a.5.5 0 0 1-.496 0l-3.75-2.143A.5.5 0 0 1 0 13.067V9.072a.5.5 0 0 1 .252-.434l3.498-2V2.643a.5.5 0 0 1 .252-.434L7.752.066ZM4.25 12.13V7.137L1.5 8.708v3.422l2.75 1.571Zm.5 1.714 2.75-1.571V7.273l-2.75 1.571v4.999Zm3.25-1.571 2.75 1.571V8.995L8 7.424v4.999ZM11.25 7.137l2.75 1.571V5.286L11.25 3.715v3.422ZM8 1.424l-2.75 1.571v3.422L8 4.846l2.75 1.571V2.995L8 1.424Z"/>
+            </svg>
+            <span class="ml-3 flex-1 whitespace-nowrap">{{ __('Inventori Produk') }}</span>
+        </a>
+    </li>
 
-        <span class="ml-3 flex-1 whitespace-nowrap">{{ __('Inventori Bahan') }}</span>
-    </a>
-</li>
+    {{-- Menu Gudang --}}
+    <li>
+        <a href="{{ route('admin.warehouse.dashboard') }}"
+            class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 group w-full {{ request()->routeIs('admin.warehouse.*') ? 'bg-gray-100' : '' }}">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+            <span class="ml-3 flex-1 whitespace-nowrap">{{ __('Gudang') }}</span>
+        </a>
+    </li>
 
-{{-- Menu Resep Produksi (Formula) --}}
-<li class="flex">
-    <a href="{{ route('admin.formula.index') }}"
-        class="text-base text-gray-900 font-normal rounded-lg flex items-center p-2 hover:bg-gray-100 group w-full {{ request()->routeIs('admin.formula.*') ? 'bg-gray-100' : '' }}">
-        
-        <svg xmlns="http://www.w3.org/2000/svg" 
-            class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75" 
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor" 
-            stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-        </svg>
-
-        <span class="ml-3 flex-1 whitespace-nowrap">{{ __('Resep Produksi') }}</span>
-    </a>
-</li>
-
-{{-- Menu Proses Produksi --}}
-<li class="flex">
-    <a href="{{ route('admin.productions.index') }}"
-        class="text-base text-gray-900 font-normal rounded-lg flex items-center p-2 hover:bg-gray-100 group w-full {{ request()->routeIs('admin.productions.*') ? 'bg-gray-100' : '' }}">
-        
-        <svg xmlns="http://www.w3.org/2000/svg" 
-            class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75" 
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor" 
-            stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 01-.586 1.414l-5 5c-.126.126-.269.246-.426.353" />
-        </svg>
-
-        <span class="ml-3 flex-1 whitespace-nowrap">{{ __('Proses Produksi') }}</span>
-    </a>
-</li>
-
-{{-- Menu Inventori Produksi (Produk Jadi) --}}
-<li class="flex">
-    <a href="{{ route('admin.inventory.product.index') }}"
-        class="text-base text-gray-900 font-normal rounded-lg flex items-center p-2 hover:bg-gray-100 group w-full {{ request()->routeIs('admin.inventory.product.*') ? 'bg-gray-100' : '' }}">
-        
-        <svg xmlns="http://www.w3.org/2000/svg" 
-            class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75" 
-            fill="currentColor" 
-            viewBox="0 0 16 16">
-            <path d="M7.752.066a.5.5 0 0 1 .496 0l3.75 2.143a.5.5 0 0 1 .252.434v3.995l3.498 2a.5.5 0 0 1 .252.434v3.995a.5.5 0 0 1-.252.434l-3.75 2.143a.5.5 0 0 1-.496 0l-3.502-2-3.502 2a.5.5 0 0 1-.496 0l-3.75-2.143A.5.5 0 0 1 0 13.067V9.072a.5.5 0 0 1 .252-.434l3.498-2V2.643a.5.5 0 0 1 .252-.434L7.752.066ZM4.25 12.13V7.137L1.5 8.708v3.422l2.75 1.571Zm.5 1.714 2.75-1.571V7.273l-2.75 1.571v4.999Zm3.25-1.571 2.75 1.571V8.995L8 7.424v4.999ZM11.25 7.137l2.75 1.571V5.286L11.25 3.715v3.422ZM8 1.424l-2.75 1.571v3.422L8 4.846l2.75 1.571V2.995L8 1.424Z"/>
-        </svg>
-
-        <span class="ml-3 flex-1 whitespace-nowrap">{{ __('Inventori Produk') }}</span>
-    </a>
-</li>
-
+    {{-- Menu Laporan --}}
+    <li>
+        <a href="{{ route('admin.report.stock') }}"
+            class="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 group w-full {{ request()->routeIs('admin.report.*') ? 'bg-gray-100' : '' }}">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span class="ml-3 flex-1 whitespace-nowrap">{{ __('Laporan') }}</span>
+        </a>
+    </li>
+</ul>
                             </ul>
                             <div class="space-y-2 pt-2 ">
                                 <div class="pt-4 pb-1 border-t border-gray-200">

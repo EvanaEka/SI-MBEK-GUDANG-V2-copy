@@ -190,6 +190,7 @@ Route::post('inventory/product/{product}/update-rop', [ProductInventoryControlle
             //Disposal
             Route::post('/disposal/material/{stock}', [DisposalController::class, 'disposeMaterial']);
             Route::post('/disposal/production/{production}', [DisposalController::class, 'disposeProduction']);
+            Route::post('/disposal/product-batch/{stock}', [DisposalController::class, 'disposeProductBatch']);
 
             //Laporan
             Route::prefix('report')
@@ -210,7 +211,11 @@ Route::post('inventory/product/{product}/update-rop', [ProductInventoryControlle
                 });
 
             //Warehouse
-            Route::get('/warehouse', [WarehouseDashboardController::class, 'index'])->name('warehouse.dashboard');
+            Route::get('/warehouse', [WarehouseDashboardController::class, 'index'])
+    ->name('warehouse.dashboard');
+
+Route::get('/warehouse/activity-log', [WarehouseDashboardController::class, 'activityLog'])
+    ->name('warehouse.activity-log');
 
             // Dashboard
             Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -271,6 +276,7 @@ Route::post('inventory/product/{product}/update-rop', [ProductInventoryControlle
             Route::get('penjualan', [DashboardController::class, 'penjualan'])->name('penjualan');
             Route::get('penjualan/invoice/{order_id}', [PenjualanController::class, 'invoice'])->name('penjualan.invoice');
             Route::get('penjualan/manual-invoice/{order_id}', [PenjualanController::class, 'manualInvoice'])->name('penjualan.manual-invoice');
+            
 
             // Order Management
             Route::post('orders/{order}/notes', [DashboardController::class, 'updateNotes'])->name('orders.notes.update');

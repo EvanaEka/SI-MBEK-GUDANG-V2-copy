@@ -37,16 +37,22 @@ class OrderController extends Controller
     /**
      * Display a listing of the resource (halaman list order).
      */
-    public function index()
-    {
-        $kambings = Kambing::where('for_sale', 'yes')->get();
-        $dombas = Domba::where('for_sale', 'yes')->get();
-        $products = Product::whereHas('stocks', function ($q) {
-            $q->where('qty', '>', 0);
-        })->get();
+   public function index()
+{
+    $kambings = Kambing::where('for_sale', 'yes')->get();
+    $dombas   = Domba::where('for_sale', 'yes')->get();
 
-        return view('order', compact('kambings', 'dombas', 'products'));
-    }
+    // Tampilkan produk yang punya alokasi jual > 0
+    // (admin sudah mengalokasikan stok untuk dijual)
+    $products = Product::whereHas('allocations', function ($q) {
+            $q->where('type', 'jual')->where('qty', '>', 0);
+        })
+        ->where('stok', '>', 0)      // double-check stok tidak 0
+        ->with(['allocations'])
+        ->get();
+
+    return view('order', compact('kambings', 'dombas', 'products'));
+}
 
     /**
      * Display the specified resource (halaman detail order berdasarkan category dan id).

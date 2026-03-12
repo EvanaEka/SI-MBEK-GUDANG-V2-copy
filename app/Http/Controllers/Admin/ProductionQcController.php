@@ -92,6 +92,16 @@ class ProductionQcController extends Controller
                 'status'        => $status === 'layak' ? 'diproses' : 'rejected'
             ]);
 
+            // 🔥 AUTO DISPOSAL JIKA QC GAGAL DITAMBAHKAN DI SINI
+            if ($status === 'tidak_layak') {
+                $production->disposals()->create([
+                    'quantity' => $production->qty_produksi,
+                    'reason' => 'gagal_qc', // pastikan alasan ini sesuai dengan filter di laporan
+                    'notes' => 'Otomatis dibuang karena tidak lolos Quality Control (Skor: '.$percentage.'%).',
+                    'created_by' => auth('admin')->id(),
+                ]);
+            }
+
             $actor = $this->getCurrentActor();
             if ($actor) {
                 ActivityLog::create([

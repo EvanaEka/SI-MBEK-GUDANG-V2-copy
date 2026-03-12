@@ -44,7 +44,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Route wildcard harus di BAWAH - tambahkan constraint untuk keamanan
     Route::get('/order/{category}/{id}', [OrderController::class, 'show'])
-        ->where('category', 'kambing|domba')
+        ->where('category', 'kambing|domba|product')
         ->where('id', '[0-9]+')
         ->name('order.show');
 

@@ -164,74 +164,39 @@
                 {{-- Detail Produk --}}
                 <div class="w-full md:w-1/3 mt-6 md:mt-0">
                     <h3 class="text-xl font-semibold text-gray-800 mb-4">Yang Anda Dapatkan</h3>
-                    <ul class="list-disc pl-6 space-y-2 text-sm text-gray-700">
-                        <li>
-                            <span class="font-medium">
-                                {{ $category === 'product' ? '1 Produk' : '1 Ekor ' . ucfirst($category) }}
-                            </span>
-                            {{ $category === 'product' ? '' : 'sesuai syariat Islam' }}
-                        </li>
-                        <li>
-                            <span class="font-medium">Status Kesehatan:</span>
-                            @if($category === 'kambing' || $category === 'domba')
-                                <span
-                                    class="{{ strtolower($item->faksin_status ?? '') === 'tidak aktif' ? 'text-red-600' : 'text-green-600' }}">
-                                    {{ strtolower($item->faksin_status ?? '') === 'tidak' ? 'Belum divaksin' : 'Sudah divaksin' }}
-                                </span>
-                                &
-                                <span
-                                    class="{{ strtolower($item->healt_status ?? '') === 'sehat' ? 'text-green-600' : 'text-red-600' }}">
-                                    {{ strtolower($item->healt_status ?? '') === 'sehat' ? 'Sehat' : 'Tidak sehat' }}
-                                </span>
-                            @else
-                                <span class="text-green-600">Produk Berkualitas</span>
-                            @endif
-                        </li>
-
-                        <li>Garansi tukar jika sakit saat diterima <span class="text-xs text-gray-500">(S&K
-                                berlaku)</span></li>
-                        <li>Sertifikat kesehatan tersedia <span class="text-xs text-gray-500">(jika diminta)</span>
-                        </li>
-                    </ul>
+                    <ul class="text-sm space-y-2 text-gray-600">
+    <li>• 1 {{ $category === 'product' ? 'Produk' : 'Ekor' }}</li>
+    
+    {{-- Info ini hanya untuk Kambing & Domba --}}
+    @if($category !== 'product')
+        <li>• Status Kesehatan: <span class="text-green-600 font-semibold">{{ $item->healt_status ?? 'Sehat' }}</span></li>
+        <li>• Garansi tukar jika sakit saat diterima (S&K berlaku)</li>
+        <li>• Sertifikat kesehatan tersedia (jika diminta)</li>
+    @else
+        {{-- Info khusus untuk Pakan & Obat --}}
+        <li>• Kategori: <span class="font-semibold">{{ ucfirst($item->type) }}</span></li>
+        <li>• Kode: <span class="font-semibold">{{ $item->kode }}</span></li>
+        <li>• Produk Berkualitas & Terstandarisasi</li>
+    @endif
+</ul>
                     <div class="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4 shadow-sm">
                         <h4 class="text-base font-semibold text-gray-800 mb-2">Deskripsi Produk</h4>
-                        <ul class="list-disc pl-6 space-y-2 text-sm text-gray-700">
-                            <li><span class="font-medium"></span> {{ $item->name ?? ucfirst($kategoriProduk) }}</li>
-                            @if($category === 'kambing' || $category === 'domba')
-                                <li><span class="font-medium">Jenis Kelamin:</span> {{ $item->jenis_kelamin ?? '-' }}</li>
-                                <li><span class="font-medium">Berat Saat Ini:</span> {{ $item->weight_now ?? '-' }} kg
-                                </li>
-                            @endif
-                            @if(($category === 'kambing' || $category === 'domba') && !empty($item->tanggal_lahir))
-                                @php
-                                    $birthDate = new DateTime($item->tanggal_lahir);
-                                    $today = new DateTime();
-                                    $diff = $today->diff($birthDate);
-                                    $years = $diff->y;
-                                    $months = $diff->m;
-                                @endphp
-                            @endif
-
-                            @if($category === 'kambing' || $category === 'domba')
-                                <li>
-                                    <span class="font-medium">Perkiraan Umur:</span>
-                                    @if(isset($years))
-                                        @if ($years > 0 && $months > 0)
-                                            {{ $years }} tahun {{ $months }} bulan
-                                        @elseif($years > 0)
-                                            {{ $years }} tahun
-                                        @elseif($months > 0)
-                                            {{ $months }} bulan
-                                        @else
-                                            Baru lahir
-                                        @endif
-                                    @else
-                                        -
-                                    @endif
-                                </li>
-                            @endif
-
-                        </ul>
+                        <div class="bg-white p-4 rounded-lg shadow-sm border mt-4">
+    <h3 class="font-bold text-gray-800 mb-2">Deskripsi Produk</h3>
+    <div class="text-sm text-gray-600">
+        @if($category === 'product')
+            {{-- Tampilkan deskripsi pakan/obat dari database --}}
+            <p>{{ $item->deskripsi ?? 'Pakan/Obat berkualitas tinggi untuk menunjang kesehatan ternak.' }}</p>
+        @else
+            {{-- Tampilkan info otomatis untuk ternak --}}
+            <ul class="list-disc ml-4 space-y-1">
+                <li>Jenis: {{ $item->type_goat ?? $item->type_domba ?? '-' }}</li>
+                <li>Jenis Kelamin: {{ $item->jenis_kelamin }}</li>
+                <li>Berat: {{ $item->weight_now }} kg</li>
+            </ul>
+        @endif
+    </div>
+</div>
                     </div>
                     <div class="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4 shadow-sm">
                         <h4 class="text-base font-semibold text-gray-800 mb-2">Informasi Pengiriman</h4>
