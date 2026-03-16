@@ -3,17 +3,15 @@
 namespace App\Notifications;
 
 use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Notifications\Notification;
 
-class CustomVerifyEmail extends Notification
+class CustomVerifyEmail extends VerifyEmail implements ShouldQueue
 {
-    public function via($notifiable)
-    {
-        return ['mail'];
-    }
+    use Queueable;
 
     public function toMail($notifiable)
     {
@@ -21,7 +19,7 @@ class CustomVerifyEmail extends Notification
 
         return (new MailMessage)
             ->subject('Verifikasi Email Anda - SI MBEK')
-            ->view('emails.verify', [ // gunakan Blade kustom
+            ->view('emails.verify', [
                 'url' => $verificationUrl,
                 'user' => $notifiable
             ]);
@@ -32,7 +30,10 @@ class CustomVerifyEmail extends Notification
         return URL::temporarySignedRoute(
             'verification.verify',
             Carbon::now()->addMinutes(60),
-            ['id' => $notifiable->getKey(), 'hash' => sha1($notifiable->getEmailForVerification())]
+            [
+                'id' => $notifiable->getKey(),
+                'hash' => sha1($notifiable->getEmailForVerification())
+            ]
         );
     }
 }
