@@ -62,9 +62,10 @@ class Order extends Model
     }
 
     // Add method to check if product has pending order
-    public static function isProductPending($orderableId)
+    public static function isProductPending($orderableId, $orderableType)
     {
         return self::where('orderable_id', $orderableId)
+            ->where('orderable_type', $orderableType)
             ->where('status', 'pending')
             ->exists();
     }
@@ -73,5 +74,5 @@ class Order extends Model
     {
         return $this->morphTo();
     }
-    
+
 }

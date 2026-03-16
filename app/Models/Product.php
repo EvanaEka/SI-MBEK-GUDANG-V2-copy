@@ -18,6 +18,7 @@ class Product extends Model
         'rop',
         'formula_id',
         'type',
+        'image',
         'source',
         'created_by',
     ];
@@ -66,5 +67,12 @@ class Product extends Model
     public function stocks()
     {
         return $this->hasMany(ProductStock::class, 'product_id');
+    }
+
+    public function getImageUrlAttribute()
+    {
+        return $this->image
+            ? asset('storage/' . $this->image)
+            : asset('uploads/default.png');
     }
 }

@@ -21,16 +21,13 @@ class ProductController extends Controller
 
         return view('admin.product.index', compact('products'));
     }
-    
+
     /**
      * ➕ Form tambah produk baru
      */
     public function create()
     {
-        // Mengambil data resep dari database
         $formulas = Formula::orderBy('nama_formula')->get();
-        
-        // Mengirim ke view agar dropdown ada isinya
         return view('admin.product.create', compact('formulas'));
     }
 
@@ -47,24 +44,22 @@ class ProductController extends Controller
             'formula_id' => 'nullable|exists:formulas,id',
             'type' => 'required|in:pakan,obat',
             'source' => 'required|in:produksi,pembelian',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', // Validasi gambar
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         if ($request->source === 'produksi' && !$request->formula_id) {
-           return redirect()->back()->withInput()->with('error', 'Produk produksi wajib memiliki formula');
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Produk produksi wajib memiliki formula');
         }
 
-        // Handle upload image
+        // ⭐ Upload image (Laravel Storage)
         $imagePath = null;
-if ($request->hasFile('image')) {
-    $file = $request->file('image');
-    $fileName = time() . '_' . $file->getClientOriginalName();
-    // Pindahkan langsung ke public/uploads/products
-    $file->move(public_path('uploads/products'), $fileName);
-    $imagePath = 'uploads/products/' . $fileName;
-}
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('products', 'public');
+        }
 
-        $product = Product::create([
+        Product::create([
             'kode' => $request->kode,
             'nama' => $request->nama,
             'harga' => $request->harga,
@@ -73,11 +68,11 @@ if ($request->hasFile('image')) {
             'formula_id' => $request->formula_id,
             'type' => $request->type,
             'source' => $request->source,
-            'image' => $imagePath, // Simpan path gambar
+            'image' => $imagePath,
             'created_by' => auth('admin')->id(),
         ]);
 
-       return redirect()->route('admin.products.index')
+        return redirect()->route('admin.products.index')
             ->with('success', 'Produk berhasil ditambahkan');
     }
 
@@ -104,15 +99,15 @@ if ($request->hasFile('image')) {
             'formula_id' => 'nullable|exists:formulas,id',
             'type' => 'required|in:pakan,obat',
             'source' => 'required|in:produksi,pembelian',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', // Validasi gambar
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         if ($request->source === 'produksi' && !$request->formula_id) {
-           return redirect()->back()->with('error', 'Produk produksi wajib memiliki formula');
+            return redirect()->back()
+                ->with('error', 'Produk produksi wajib memiliki formula');
         }
 
-        // Handle update image
-        $dataToUpdate = [
+        $data = [
             'kode' => $request->kode,
             'nama' => $request->nama,
             'harga' => $request->harga,
@@ -122,21 +117,22 @@ if ($request->hasFile('image')) {
             'source' => $request->source,
         ];
 
+        // ⭐ Jika upload gambar baru
         if ($request->hasFile('image')) {
-    // Hapus foto lama jika ada
-    if ($product->image && file_exists(public_path($product->image))) {
-        unlink(public_path($product->image));
-    }
-    
-    $file = $request->file('image');
-    $fileName = time() . '_' . $file->getClientOriginalName();
-    $file->move(public_path('uploads/products'), $fileName);
-    $dataToUpdate['image'] = 'uploads/products/' . $fileName;
-}
 
-        $product->update($dataToUpdate);
+            // hapus gambar lama
+            if ($product->image) {
+                Storage::disk('public')->delete($product->image);
+            }
 
-       return redirect()->route('admin.products.index')->with('success', 'Produk berhasil diperbarui');
+            // upload gambar baru
+            $data['image'] = $request->file('image')->store('products', 'public');
+        }
+
+        $product->update($data);
+
+        return redirect()->route('admin.products.index')
+            ->with('success', 'Produk berhasil diperbarui');
     }
 
     /**
@@ -145,16 +141,18 @@ if ($request->hasFile('image')) {
     public function destroy(Product $product)
     {
         if ($product->stok > 0) {
-           return redirect()->back()->with('error', 'Produk tidak bisa dihapus karena masih memiliki stok');
+            return redirect()->back()
+                ->with('error', 'Produk tidak bisa dihapus karena masih memiliki stok');
         }
 
-        // Hapus file gambar kalau ada
-        if ($product->image && Storage::disk('public')->exists($product->image)) {
+        // ⭐ hapus gambar
+        if ($product->image) {
             Storage::disk('public')->delete($product->image);
         }
 
         $product->delete();
 
-        return redirect()->route('admin.products.index')->with('success', 'Produk berhasil dihapus');
+        return redirect()->route('admin.products.index')
+            ->with('success', 'Produk berhasil dihapus');
     }
 }

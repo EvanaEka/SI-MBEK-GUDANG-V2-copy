@@ -2,6 +2,7 @@
     use App\Models\Kambing;
     use App\Models\Domba;
     use App\Models\Product;
+    use Illuminate\Support\Facades\Storage;
 
     $kategoriProduk = request('kategori_produk', 'semua');
     $jenisList = [];
@@ -234,14 +235,8 @@
 
                             // Cek Path Gambar Biar Gak Error
                             $imgPath = asset('uploads/default.png');
-                            if (!empty($produk->image)) {
-                                if (str_starts_with($produk->image, 'http')) {
-                                    $imgPath = $produk->image;
-                                } elseif (str_starts_with($produk->image, 'storage/')) {
-                                    $imgPath = asset($produk->image);
-                                } else {
-                                    $imgPath = asset('storage/' . $produk->image);
-                                }
+                            if (!empty($produk->image) && Storage::disk('public')->exists($produk->image)) {
+                            $imgPath = asset('storage/' . $produk->image);
                             }
                         @endphp
 
