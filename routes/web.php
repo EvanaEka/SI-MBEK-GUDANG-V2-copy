@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\Auth\AdminForgotPasswordController;
 use App\Http\Controllers\Admin\Auth\AdminResetPasswordController;
 use App\Http\Controllers\Owner\Auth\OwnerForgotPasswordController;
 use App\Http\Controllers\Owner\Auth\OwnerResetPasswordController;
+use Illuminate\Support\Facades\Mail;
 
 Route::get('/', function () {
     return view('welcome');
@@ -113,6 +114,15 @@ Route::prefix('owner')->name('owner.')->group(function () {
     Route::post('/reset-password', [OwnerResetPasswordController::class, 'reset'])
         ->middleware('guest:owner')
         ->name('password.update');
+});
+
+Route::get('/test-email', function () {
+    Mail::raw('Test email', function ($message) {
+        $message->to('emailkamu@gmail.com')
+            ->subject('Test Gmail SMTP');
+    });
+
+    return 'Email terkirim!';
 });
 
 require __DIR__ . '/auth.php';
