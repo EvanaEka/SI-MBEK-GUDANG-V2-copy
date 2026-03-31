@@ -134,7 +134,7 @@
                             @endphp
                             <a href="{{ url()->current() . '?' . http_build_query(array_merge($baseParams, ['kategori_produk' => 'produk'])) }}"
                                 class="block px-3 py-2 rounded font-bold {{ $isProdukActive ? 'bg-brand-orange text-white font-bold' : 'hover:bg-orange-50' }}">
-                                Produk / Pakan
+                                Produk
                             </a>
                             @if ($jenisProdukList->count())
                                 <details class="group mt-1" {{ $isProdukActive && request('jenis') ? 'open' : '' }}>

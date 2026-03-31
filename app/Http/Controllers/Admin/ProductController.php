@@ -47,6 +47,7 @@ class ProductController extends Controller
             'formula_id' => 'nullable|exists:formulas,id',
             'type' => 'required|in:pakan,obat',
             'source' => 'required|in:produksi,pembelian',
+            'deskripsi' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', // Validasi gambar
         ]);
 
@@ -69,6 +70,7 @@ if ($request->hasFile('image')) {
             'nama' => $request->nama,
             'harga' => $request->harga,
             'stok' => 0,
+            'deskripsi' => $request->deskripsi,
             'rop' => $request->rop ?? 0,
             'formula_id' => $request->formula_id,
             'type' => $request->type,
@@ -104,6 +106,7 @@ if ($request->hasFile('image')) {
             'formula_id' => 'nullable|exists:formulas,id',
             'type' => 'required|in:pakan,obat',
             'source' => 'required|in:produksi,pembelian',
+            'deskripsi' => 'nullable|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', // Validasi gambar
         ]);
 
@@ -116,6 +119,7 @@ if ($request->hasFile('image')) {
             'kode' => $request->kode,
             'nama' => $request->nama,
             'harga' => $request->harga,
+            'deskripsi' => $request->deskripsi,
             'rop' => $request->rop ?? 0,
             'formula_id' => $request->formula_id,
             'type' => $request->type,

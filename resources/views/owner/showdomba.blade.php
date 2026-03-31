@@ -109,7 +109,7 @@
             <div class="dashboard-section overflow-hidden">
                 <div class="brand-orange p-5 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div class="flex items-center w-full md:w-auto">
-                        <a href="{{ route('owner.domba.list') }}"
+                        <a href="{{ route('owner.listdomba') }}"
                             class="text-white hover:text-orange-200 font-medium flex items-center mr-3">
                             <svg class="w-5 h-5 mr-1" aria-hidden="true" fill="none" viewBox="0 0 24 24">
                                 <path stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
