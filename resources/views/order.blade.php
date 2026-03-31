@@ -20,9 +20,23 @@
     <div class="flex flex-col items-center justify-center min-h-screen">
         <div class="bg-white rounded-lg shadow-md p-6 w-full max-w-4xl my-10">
 
-            {{-- Banner Gambar --}}
-            <div class="mb-6">
-                <img src="{{ asset($item->image ?? 'uploads/default.png') }}" alt="Gambar Produk" class="w-full h-48 object-cover rounded">
+           {{-- Banner Gambar --}}
+            @php
+                $imgPath = asset('uploads/default.png');
+                if (!empty($item->image)) {
+                    if (str_starts_with($item->image, 'http')) {
+                        $imgPath = $item->image;
+                    } elseif (str_starts_with($item->image, 'storage/')) {
+                        $imgPath = asset($item->image);
+                    } else {
+                        $imgPath = asset('storage/' . $item->image);
+                    }
+                }
+            @endphp
+            <div class="mb-6 flex justify-center bg-gray-50 rounded-lg border border-gray-200 p-4 shadow-inner">
+                <img src="{{ $imgPath }}" alt="Gambar Produk" 
+                    class="h-48 md:h-64 w-auto object-contain rounded"
+                    onerror="this.src='{{ asset('uploads/default.png') }}'">
             </div>
 
             {{-- Pilihan Metode Pembayaran --}}
