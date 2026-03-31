@@ -93,62 +93,70 @@
                     @php
                         $produk = $order->orderable;
                         $kategori = $produk ? class_basename($produk) : 'Tidak ditemukan';
+                        $isProduct = strtolower($kategori) === 'product';
                     @endphp
                     @if($produk)
                         <div class="flex flex-col md:flex-row gap-4">
                             @if($produk->image)
-                                <img src="{{ asset($produk->image) }}" alt="Gambar {{ $kategori }}"
-                                    class="md:w-32 h-32 object-cover rounded-lg border">
+                                <img src="{{ asset(str_starts_with($produk->image, 'http') ? $produk->image : (str_starts_with($produk->image, 'storage/') ? $produk->image : 'storage/'.$produk->image)) }}" alt="Gambar {{ $kategori }}"
+                                    class="w-full md:w-32 h-32 object-cover rounded-lg border bg-white" onerror="this.src='{{ asset('uploads/default.png') }}'">
                             @else
                                 <div class="w-full md:w-32 h-32 bg-gray-200 rounded-lg border flex items-center justify-center">
                                     <svg class="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd"
-                                            d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
-                                            clip-rule="evenodd" />
+                                        <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
                                     </svg>
                                 </div>
                             @endif
                             <div class="flex-1">
-                                <h3 class="font-semibold text-lg text-gray-900">{{ $kategori }} -
-                                    {{ $produk->name ?? 'Unnamed' }}
+                                <h3 class="font-semibold text-lg text-gray-900">{{ $isProduct ? 'Produk Pakan/Obat' : $kategori }} -
+                                    {{ $produk->name ?? $produk->nama ?? 'Unnamed' }}
                                 </h3>
-                                <p class="text-gray-600 mb-2">{{ $produk->deskripsi ?? 'Tidak ada deskripsi' }}</p>
-                                <div class="grid grid-cols-2 gap-2 text-sm">
-                                    <div>
-                                        <span class="text-gray-600">Berat:</span>
-                                        <span class="font-medium text-gray-900">{{ $produk->weight_now ?? '-' }} kg</span>
-                                    </div>
-                                    <div>
-                                        <span class="text-gray-600">Umur:</span>
-                                        <span class="font-medium text-gray-900">@php
-                                            $birthDate = new DateTime($produk->tanggal_lahir);
-                                            $today = new DateTime();
-                                            $diff = $today->diff($birthDate);
-
-                                            $years = $diff->y;
-                                            $months = $diff->m;
-                                        @endphp
-                                            @if ($years > 0 && $months > 0)
-                                                {{ $years }} tahun {{ $months }} bulan
-                                            @elseif($years > 0)
-                                                {{ $years }} tahun
-                                            @elseif($months > 0)
-                                                {{ $months }} bulan
-                                            @else
-                                                Baru lahir
-                                            @endif</span>
-                                    </div>
-                                    <div>
-                                        <span class="text-gray-600">Jenis Kelamin:</span>
-                                        <span class="font-medium text-gray-900">{{ $produk->jenis_kelamin ?? '-' }}</span>
-                                    </div>
-                                    <div>
-                                        <span class="text-gray-600">Status Kesehatan:</span>
-                                        <span
-                                            class="font-medium {{ strtolower($produk->healt_status ?? '') === 'sehat' ? 'text-green-600' : 'text-red-600' }}">
-                                            {{ $produk->healt_status ?? '-' }}
-                                        </span>
-                                    </div>
+                                <p class="text-gray-600 mb-3 text-sm leading-relaxed">{{ $produk->deskripsi ?? 'Tidak ada keterangan tambahan' }}</p>
+                                
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm bg-white p-3 rounded-lg border border-gray-200">
+                                    @if($isProduct)
+                                        {{-- Info khusus Pakan / Obat --}}
+                                        <div>
+                                            <span class="text-gray-500 block text-xs">Kode Produk</span>
+                                            <span class="font-semibold text-gray-900">{{ $produk->kode ?? '-' }}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-500 block text-xs">Tipe</span>
+                                            <span class="font-semibold text-gray-900">{{ ucfirst($produk->type ?? '-') }}</span>
+                                        </div>
+                                    @else
+                                        {{-- Info khusus Ternak (Kambing/Domba) --}}
+                                        <div>
+                                            <span class="text-gray-500 block text-xs">Berat</span>
+                                            <span class="font-semibold text-gray-900">{{ $produk->weight_now ?? '-' }} kg</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-500 block text-xs">Umur</span>
+                                            <span class="font-semibold text-gray-900">
+                                                @php
+                                                    $birthDate = new DateTime($produk->tanggal_lahir);
+                                                    $today = new DateTime();
+                                                    $diff = $today->diff($birthDate);
+                                                    $years = $diff->y;
+                                                    $months = $diff->m;
+                                                @endphp
+                                                @if ($years > 0 && $months > 0) {{ $years }} tahun {{ $months }} bulan
+                                                @elseif($years > 0) {{ $years }} tahun
+                                                @elseif($months > 0) {{ $months }} bulan
+                                                @else Baru lahir @endif
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-500 block text-xs">Jenis Kelamin</span>
+                                            <span class="font-semibold text-gray-900">{{ $produk->jenis_kelamin ?? '-' }}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-500 block text-xs">Status Kesehatan</span>
+                                            <span class="font-semibold {{ strtolower($produk->healt_status ?? '') === 'sehat' ? 'text-green-600' : 'text-red-600' }}">
+                                                {{ $produk->healt_status ?? '-' }}
+                                            </span>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -159,22 +167,21 @@
                         </div>
                     @endif
 
-                    <div class="mt-4 pt-4 border-t">
-                        <div class="flex justify-between items-center">
-                            <span class="text-lg font-semibold text-gray-800">Total Pembayaran:</span>
-                            <span class="text-2xl font-bold text-green-600">
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <div class="flex justify-between items-center text-sm text-gray-600 mb-2">
+                            <span>Harga Satuan: Rp {{ number_format($order->gross_amount / max($order->qty ?? 1, 1), 0, ',', '.') }}</span>
+                            <span>Qty: <strong class="text-gray-900">{{ $order->qty ?? 1 }}</strong></span>
+                            <span>Metode: <strong class="text-gray-900">{{ $order->payment_method === 'midtrans' ? 'Digital Payment' : 'Transfer Manual' }}</strong></span>
+                        </div>
+                        <div class="flex justify-between items-center bg-green-50 p-3 rounded-lg border border-green-100">
+                            <span class="text-lg font-bold text-gray-800">Total Pembayaran</span>
+                            <span class="text-2xl font-black text-green-700">
                                 Rp {{ number_format($order->gross_amount, 0, ',', '.') }}
                             </span>
-                        </div>
-                        <div class="flex justify-between items-center text-sm text-gray-600 mt-1">
-                            <span>Qty: {{ $order->qty ?? 1 }}</span>
-                            <span>Metode:
-                                {{ $order->payment_method === 'midtrans' ? 'Digital Payment' : 'Transfer Manual' }}</span>
                         </div>
                     </div>
                 </div>
             </div>
-
 
 
             {{-- Action Buttons --}}

@@ -93,6 +93,12 @@
                         </div>
 
                         <div class="mb-4">
+                            <p class="text-xs text-black font-bold uppercase mb-1">Deskripsi Produk</p>
+                            <p x-show="!editMode" class="text-sm text-gray-600 italic whitespace-pre-wrap">{{ $product->deskripsi ?? 'Tidak ada deskripsi' }}</p>
+                            <textarea x-show="editMode" name="deskripsi" rows="3" class="w-full border-gray-300 rounded focus:ring-orange-500 text-black">{{ $product->deskripsi }}</textarea>
+                        </div>
+
+                        <div class="mb-4">
                             <p class="text-xs text-black font-bold uppercase mb-1">Harga Jual (Rp)</p>
                             <p x-show="!editMode" class="text-lg text-gray-800">Rp
                                 {{ number_format($product->harga, 0, ',', '.') }}

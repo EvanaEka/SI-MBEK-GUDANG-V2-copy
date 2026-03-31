@@ -20,6 +20,9 @@
                         <option value="pembelian">Beli Jadi</option>
                     </select>
 
+                     <label class="block font-bold mt-4 mb-2">Deskripsi Produk</label>
+                    <textarea name="deskripsi" class="w-full border-gray-300 rounded" rows="3" placeholder="Masukkan deskripsi produk, manfaat, atau cara penggunaan..."></textarea>
+
                     <label class="block font-bold mt-4 mb-2">Foto Produk</label>
                     <input type="file" name="image" class="w-full border-gray-300 rounded p-1" accept="image/*">
                     <p class="text-xs text-gray-500 mt-1">Maksimal 2MB (JPG, PNG, WEBP)</p>

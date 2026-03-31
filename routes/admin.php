@@ -160,7 +160,6 @@ Route::get('/productions/{production}', [ProductionController::class, 'show'])->
                 [ProductionQcController::class, 'store']
             )->name('qc.store');
 
-            //Product Inventory
            // Product Inventory (Gunakan ->names() untuk menghindari bentrok dengan Master Data)
 Route::resource('inventory/product', ProductInventoryController::class)
     ->names([

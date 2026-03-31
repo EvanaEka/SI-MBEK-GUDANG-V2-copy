@@ -124,19 +124,22 @@ class OrderController extends Controller
         // 3. Generate order_id unik
         $orderId = 'ORD-' . time() . '-' . Auth::id();
 
+        $qty = $request->input('qty', 1);
+        $totalHarga = $item->harga * $qty;
+
         // 4. Susun item_details dan transaction_details sesuai Midtrans
         $itemDetails = [
             [
                 'id' => $item->id,
                 'price' => (int) $item->harga,
-                'quantity' => 1,
+                'quantity' => (int) $qty,
                 'name' => ucfirst($request->category ?? 'Produk') . ' - ' . ($item->name ?? 'Unnamed'),
             ]
         ];
 
         $transactionDetails = [
             'order_id' => $orderId,
-            'gross_amount' => (int) $item->harga,
+            'gross_amount' => (int) $totalHarga,
         ];
 
         $customerDetails = [
@@ -178,13 +181,13 @@ class OrderController extends Controller
                 'orderable_type' => get_class($item),
                 'order_id' => $orderId,
                 'snap_token' => $snapToken,
-                'gross_amount' => $item->harga,
+                'gross_amount' => $totalHarga,
                 'status' => 'pending',
                 'payment_method' => 'midtrans',
                 'name' => $request->name,
                 'address' => $request->address,
                 'phone' => $request->phone,
-                'qty' => 1,
+                'qty' => $qty,
             ]);
 
             ActivityLog::create([
@@ -194,7 +197,7 @@ class OrderController extends Controller
                 'module' => 'order',
                 'description' => 'Membuat order Midtrans. Order ID: ' . $order->order_id .
                     ', Produk ID: ' . $item->id .
-                    ', Total: ' . $item->harga,
+                    ', Total: ' . $totalHarga,
             ]);
 
 
@@ -451,6 +454,8 @@ class OrderController extends Controller
         // Simpan bukti transfer
         $proofPath = $request->file('transfer_proof')->store('bukti_transfer', 'public');
 
+        $qty = $request->input('qty', 1);
+
         try {
             // Buat order
             $order = Order::create([
@@ -465,7 +470,7 @@ class OrderController extends Controller
                 'name' => $request->name,
                 'address' => $request->address,
                 'phone' => $request->phone,
-                'qty' => 1,
+                'qty' => $qty,
                 'bukti_transfer' => $proofPath,
                 'sender_name' => $request->sender_name,
                 'bank_origin' => $request->bank_origin,
