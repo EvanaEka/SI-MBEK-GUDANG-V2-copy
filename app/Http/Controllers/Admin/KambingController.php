@@ -7,7 +7,6 @@ use App\Models\Kambing;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Laravel\Facades\Image;
 use Carbon\Carbon;
 use App\Models\KambingHistory;
 use Illuminate\Support\Facades\Mail;
@@ -33,7 +32,7 @@ class KambingController extends Controller
         $referensi = $referensi ?: now();
         $lahir = Carbon::parse($tanggal_lahir);
         $diff = $lahir->diff($referensi);
-        
+
         return [
             'tahun' => $diff->y,
             'bulan' => $diff->m,
@@ -45,7 +44,7 @@ class KambingController extends Controller
     {
         $users = User::all();
         $kambings = Kambing::all();
-        $type_goats = ['Etawa', 'Boer', 'Skeang', 'Saaren']; 
+        $type_goats = ['Etawa', 'Boer', 'Skeang', 'Saaren'];
 
         return view('admin.tambahkambing', compact('users', 'kambings', 'type_goats'));
     }
@@ -68,43 +67,22 @@ class KambingController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
+
             $file = $request->file('image');
-            $fileName = "raman" .  time() . '_' . $file->getClientOriginalName();
-            $image = Image::read($file);
 
-            $image->resize(
-                $image->width() * 0.5,
-                $image->height() * 0.5
-            );
             $fileName = "raman" . time() . '_' . $file->getClientOriginalName();
-            $image = Image::read($file);
 
-            $image->resize(
-            $image->width() * 0.5,
-            $image->height() * 0.5
-            );
+            // simpan ke storage/app/public/kambing
+            $path = $file->storeAs('kambing', $fileName, 'public');
 
-            // Tentukan folder
-            $uploadPath = public_path('uploads');
-
-            // Kalau folder belum ada, buat otomatis
-            if (!file_exists($uploadPath)) {
-            mkdir($uploadPath, 0777, true);
-            }
-
-            // Path lengkap file
-            $filePath = 'uploads/' . $fileName;
-
-            // Save gambar
-            $image->save($uploadPath . '/' . $fileName);
-
-            }
+            $data['image'] = $path;
+        }
 
         Kambing::create([
             'user_id' => $request->user_id,
             'name' => $request->name,
             'age' => $request->age ?? 0,
-            'image' => $filePath,
+            'image' => $path ?? null,
             'imageCaption' => $request->imageCaption,
             'type_goat' => $request->type_goat,
             'tanggal_lahir' => $request->tanggal_lahir,
@@ -113,7 +91,7 @@ class KambingController extends Controller
             'faksin_status' => $request->faksin_status,
             'healt_status' => $request->healt_status,
             'age_now' => Carbon::parse($request->tanggal_lahir)->age,
-            'weight_now' =>  $request->weight_now ?? $request->weight,
+            'weight_now' => $request->weight_now ?? $request->weight,
             'for_sale' => $request->for_sale ?? 'no',
         ]);
 
@@ -144,39 +122,21 @@ class KambingController extends Controller
         $data = $request->all();
 
         if ($request->hasFile('image')) {
-            if ($kambing->image && file_exists(public_path($kambing->image))) {
-                unlink(public_path($kambing->image));
+
+            // hapus lama
+            if (!empty($kambing->image)) {
+                Storage::disk('public')->delete($kambing->image);
             }
 
-            $file = $request->file('image');
-            $fileName = "ramanU" . time() . '_' . $file->getClientOriginalName();
-            $image = Image::read($file);
+            // simpan langsung (Laravel handle semuanya)
+            $path = $request->file('image')->store('kambing', 'public');
 
-            $image->resize(
-                $image->width() * 0.5,
-                $image->height() * 0.5
-            );
-
-            // Tentukan folder
-            $uploadPath = public_path('uploads');
-
-            // Buat folder kalau belum ada
-            if (!file_exists($uploadPath)) {
-            mkdir($uploadPath, 0777, true);
-            }
-
-            $filePath = 'uploads/' . $fileName;
-
-            // Save
-            $image->save($uploadPath . '/' . $fileName);
-
-$data['image'] = $filePath;
-
+            $data['image'] = $path;
         }
 
         $kambing->update($data);
 
-        
+
         $newStatus = $kambing->for_sale;
         $newHarga = $kambing->harga;
         // Cek apakah ada perubahan status dijual atau harga
@@ -188,11 +148,11 @@ $data['image'] = $filePath;
             $kambing->user->notify(new StatusDijualChanged($kambing, $oldStatus, $oldHarga, 'kambing'));
         }
 
-       $today = Carbon::today()->toDateString(); // e.g. '2025-06-12'
+        $today = Carbon::today()->toDateString(); // e.g. '2025-06-12'
         KambingHistory::updateOrCreate(
             [
                 'kambing_id' => $kambing->id,
-                'tanggal'    => $today,
+                'tanggal' => $today,
             ],
             [
                 'bulan' => Carbon::now()->format('Y-m'),
@@ -207,8 +167,8 @@ $data['image'] = $filePath;
 
     public function destroy(Kambing $kambing)
     {
-        if ($kambing->image && file_exists(public_path($kambing->image))) {
-            unlink(public_path($kambing->image));
+        if ($kambing->image) {
+            Storage::disk('public')->delete($kambing->image);
         }
 
         $kambing->delete();
@@ -220,20 +180,25 @@ $data['image'] = $filePath;
     public function monitoring($id)
     {
         $kambing = Kambing::findOrFail($id);
-         $selectedMonth = request('bulan', 'all');
+        $selectedMonth = request('bulan', 'all');
         $query = KambingHistory::where('kambing_id', $id);
-    if ($selectedMonth !== 'all') {
-        $query->where('bulan', $selectedMonth);
-    }
-    $historis = $query->orderBy('bulan')->get();
+        if ($selectedMonth !== 'all') {
+            $query->where('bulan', $selectedMonth);
+        }
+        $historis = $query->orderBy('bulan')->get();
 
-    $labels    = $historis->pluck('bulan')->toArray();
-    $beratData = $historis->pluck('berat')->toArray();
-    $hargaData = $historis->pluck('harga')->toArray();
+        $labels = $historis->pluck('bulan')->toArray();
+        $beratData = $historis->pluck('berat')->toArray();
+        $hargaData = $historis->pluck('harga')->toArray();
 
-    return view('admin.monitoring', compact(
-        'kambing','historis','labels','beratData','hargaData','selectedMonth'
-    ));
+        return view('admin.monitoring', compact(
+            'kambing',
+            'historis',
+            'labels',
+            'beratData',
+            'hargaData',
+            'selectedMonth'
+        ));
     }
 
     public function show($kambing)
@@ -246,14 +211,14 @@ $data['image'] = $filePath;
         }
 
         $umurAwal = $this->hitungUmur(
-            $kambings->tanggal_lahir, 
+            $kambings->tanggal_lahir,
             $kambings->created_at
         );
-        
+
         $umurSekarang = $this->hitungUmur(
             $kambings->tanggal_lahir
         );
-        
+
         $selectedMonth = request('bulan', date('Y-m'));
         $historis = KambingHistory::where('kambing_id', $kambing)
             ->where('bulan', $selectedMonth) // Perbaikan: gunakan exact match
@@ -274,7 +239,7 @@ $data['image'] = $filePath;
         KambingHistory::updateOrCreate(
             [
                 'kambing_id' => $kambing->id,
-                'tanggal'    => $today,
+                'tanggal' => $today,
             ],
             [
                 'bulan' => $request->bulan,  // jika masih butuh filter per bulan custom
@@ -282,7 +247,7 @@ $data['image'] = $filePath;
                 'harga' => $request->harga,
             ]
         );
-        
+
         return back()->with('success', 'Data monitoring berhasil disimpan');
     }
 }

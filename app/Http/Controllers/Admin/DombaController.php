@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Domba;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Laravel\Facades\Image;
 use Carbon\Carbon;
 use App\Models\DombaHistory;
@@ -59,13 +60,18 @@ class DombaController extends Controller
         ]);
 
         $filePath = null;
+
         if ($request->hasFile('image')) {
             $file = $request->file('image');
+
             $fileName = 'domba_' . time() . '_' . $file->getClientOriginalName();
-            $image = Image::read($file);
-            $image->resize($image->width() * 0.5, $image->height() * 0.5);
-            $filePath = 'uploads/' . $fileName;
-            $image->save(public_path($filePath));
+
+            $image = Image::read($file)
+                ->resize($file->getWidth() * 0.5, $file->getHeight() * 0.5);
+
+            $filePath = 'domba/' . $fileName;
+
+            Storage::disk('public')->put($filePath, (string) $image->encode());
         }
 
         Domba::create([
@@ -112,15 +118,22 @@ class DombaController extends Controller
         $data = $request->all();
 
         if ($request->hasFile('image')) {
-            if ($domba->image && file_exists(public_path($domba->image))) {
-                unlink(public_path($domba->image));
+
+            // hapus lama dari storage
+            if ($domba->image) {
+                Storage::disk('public')->delete($domba->image);
             }
+
             $file = $request->file('image');
+
             $fileName = 'dombaU_' . time() . '_' . $file->getClientOriginalName();
-            $image = Image::read($file);
-            $image->resize($image->width() * 0.5, $image->height() * 0.5);
-            $filePath = 'uploads/' . $fileName;
-            $image->save(public_path($filePath));
+
+            $image = Image::read($file)->scale(50);
+
+            $filePath = 'domba/' . $fileName;
+
+            Storage::disk('public')->put($filePath, (string) $image->encode());
+
             $data['image'] = $filePath;
         }
 
@@ -155,8 +168,8 @@ class DombaController extends Controller
 
     public function destroy(Domba $domba)
     {
-        if ($domba->image && file_exists(public_path($domba->image))) {
-            unlink(public_path($domba->image));
+        if ($domba->image) {
+            Storage::disk('public')->delete($domba->image);
         }
         $domba->delete();
         return back()->with('success', 'Data domba berhasil dihapus');

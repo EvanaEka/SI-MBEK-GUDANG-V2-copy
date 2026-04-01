@@ -243,12 +243,14 @@
                                     Kambing</h4>
                                 <div class="flex justify-center">
                                     @if ($kambings->image)
-                                        <img src="{{ asset($kambings->image) }}" loading="lazy" alt="gambar kambing"
+                                        <img src="{{ asset('storage/' . $kambings->image) }}" 
+                                            loading="lazy"
+                                            alt="gambar kambing"
                                             class="w-full max-w-xs h-64 object-cover rounded-lg shadow-md cursor-pointer"
-                                            onclick="showImagePopup('{{ asset($kambings->image) }}')" />
+                                            onclick="showImagePopup('{{ asset('storage/' . $kambings->image) }}')" />
                                     @else
                                         <img 
-                                            src="{{ $product->image ? asset('storage/' . $product->image) : asset('uploads/default.png') }}" 
+                                            src="{{ asset('uploads/default.png') }}"
                                             loading="lazy"
                                             alt="gambar kambing"
                                             class="w-full max-w-xs h-64 object-cover rounded-lg shadow-md" />

@@ -235,8 +235,9 @@
 
                             // Cek Path Gambar Biar Gak Error
                             $imgPath = asset('uploads/default.png');
-                            if (!empty($produk->image) && Storage::disk('public')->exists($produk->image)) {
-                            $imgPath = asset('storage/' . $produk->image);
+                            
+                            if (!empty($produk->image)) {
+                                $imgPath = asset('storage/' . $produk->image);
                             }
                         @endphp
 

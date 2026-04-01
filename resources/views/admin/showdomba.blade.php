@@ -243,12 +243,11 @@
                                     Domba</h4>
                                 <div class="flex justify-center">
                                     @if ($domba->image)
-                                        <img src="{{ asset($domba->image) }}" loading="lazy" alt="gambar domba"
+                                        <img src="{{ asset('storage/' . $domba->image) }}" loading="lazy" alt="gambar domba"
                                             class="w-full max-w-xs h-64 object-cover rounded-lg shadow-md cursor-pointer"
-                                            onclick="showImagePopup('{{ asset($domba->image) }}')" />
+                                            onclick="showImagePopup('{{ asset('storage/' . $domba->image) }}')" />
                                     @else
-                                        <img src="{{ $product->image ? asset('storage/' . $product->image) : asset('uploads/default.png') }}"
-                                            loading="lazy" alt="gambar domba"
+                                        <img src="{{ asset('uploads/default.png') }}" loading="lazy" alt="gambar domba"
                                             class="w-full max-w-xs h-64 object-cover rounded-lg shadow-md" />
                                     @endif
                                 </div>
