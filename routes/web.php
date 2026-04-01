@@ -125,6 +125,13 @@ Route::get('/test-email', function () {
     return 'Email terkirim!';
 });
 
+Route::get('/cek-php', function () {
+    return [
+        'php_version' => phpversion(),
+        'gd_loaded' => extension_loaded('gd'),
+    ];
+});
+
 require __DIR__ . '/auth.php';
 require __DIR__ . '/admin.php';
 require __DIR__ . '/owner.php';
