@@ -15,6 +15,12 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /app
 COPY . .
 
-RUN composer install
+RUN composer install --no-dev --optimize-autoloader
 
-CMD php artisan migrate --force && php artisan storage:link && php -S 0.0.0.0:${PORT:-8080} -t public
+# FIX permission Laravel
+RUN chmod -R 775 storage bootstrap/cache
+
+# Expose port (biar Railway lebih jelas)
+EXPOSE 8080
+
+CMD php artisan migrate --force && php artisan storage:link && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
