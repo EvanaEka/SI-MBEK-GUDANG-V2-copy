@@ -115,9 +115,9 @@ class PurchaseOrderController extends Controller
             return $po; // 🔥 penting
         });
 
-        $route = Auth::guard('owner')->check()
-            ? 'owner.purchase-orders.index'
-            : 'admin.purchase-orders.index';
+        $route = Auth::guard('admin')->check()
+    ? 'admin.purchase-orders.index'
+    : 'owner.purchase-orders.index';
 
         $actor = $this->getCurrentActor();
 

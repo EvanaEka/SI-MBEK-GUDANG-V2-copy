@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Owner;
 use App\Http\Controllers\Controller;
 use App\Models\Kambing;
 use App\Models\Domba;
-use App\Models\Order; // Pastikan import Order
+use App\Models\Perjanjian;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,9 +13,6 @@ use Illuminate\Support\Carbon;
 
 class DashboardController extends Controller
 {
-    /**
-     * Display owner dashboard (Overview)
-     */
     public function index()
     {
         // === KAMBING & PERUBAHAN BULANAN ===
@@ -36,7 +33,7 @@ class DashboardController extends Controller
         $userLastMonth = User::whereBetween('created_at', [Carbon::now()->subMonth()->startOfMonth(), Carbon::now()->subMonth()->endOfMonth()])->count();
         $userPercentageChange = $userLastMonth > 0 ? (($userThisMonth - $userLastMonth) / $userLastMonth) * 100 : ($userThisMonth > 0 ? 100 : 0);
 
-        // === OVERVIEW TOP USERS (Pemilik Ternak Terbanyak) ===
+        // === OVERVIEW TOP USERS ===
         $users = User::withCount(['kambings', 'domba'])
             ->orderBy('kambings_count', 'desc')
             ->orderBy('domba_count', 'desc')
@@ -59,8 +56,10 @@ class DashboardController extends Controller
             })
             ->take(5);
 
-        // === STATISTIK KEPEMILIKAN ===
+        // === PENGGUNA YANG PUNYA DOMBA ===
         $usersWithDomba = User::has('domba')->get();
+
+        // === USER PEMILIK (yang punya kambing atau domba) ===
         $usersWithOwnership = User::whereHas('kambings')
             ->orWhereHas('domba')
             ->distinct()
@@ -70,11 +69,9 @@ class DashboardController extends Controller
             ? ($usersWithOwnership / $userCount) * 100
             : 0;
 
-        // === RATA-RATA BERAT & HARGA (FIXED: Pake for_sale) ===
+        // === RATA-RATA BERAT & HARGA ===
         $kambingAvgWeight = Kambing::avg('weight_now');
         $dombaAvgWeight = Domba::avg('weight_now');
-        
-        // Perbaikan Logic: Menggunakan for_sale = 'yes'
         $kambingAvgPrice = Kambing::where('for_sale', 'yes')->avg('harga');
         $dombaAvgPrice = Domba::where('for_sale', 'yes')->avg('harga');
 
@@ -89,11 +86,11 @@ class DashboardController extends Controller
             $weekEnd = $weekStart->copy()->endOfWeek();
 
             $weeklyLabels[] = 'Minggu ke-' . (5 - $i);
+
             $weeklyKambingCounts[] = Kambing::whereBetween('created_at', [$weekStart, $weekEnd])->count();
             $weeklyDombaCounts[] = Domba::whereBetween('created_at', [$weekStart, $weekEnd])->count();
         }
-
-        // === DATA PRODUK FOR_SALE TERLAMA (FIXED: Pake for_sale) ===
+        // === DATA PRODUK FOR_SALE TERLAMA ===
         $kambingForSale = Kambing::where('for_sale', 'yes')
             ->select('id', 'name', 'created_at', 'updated_at', DB::raw("'kambing' as product_type"))
             ->get();
@@ -102,57 +99,42 @@ class DashboardController extends Controller
             ->select('id', 'name', 'created_at', 'updated_at', DB::raw("'domba' as product_type"))
             ->get();
 
-        // Gabungkan dan urutkan
+        // Gabungkan dan urutkan berdasarkan tanggal for_sale terlama
         $allForSale = $kambingForSale->concat($dombaForSale)
             ->map(function ($item) {
-                // Asumsi jika tidak ada kolom spesifik tanggal mulai jual, gunakan created_at
-                // Jika kamu punya kolom 'for_sale_at', ganti created_at dengan itu
-                $startDate = $item->created_at; 
-                $item->days_on_sale = $startDate->diffInDays(now());
-                $item->sale_date = $startDate;
+                // Gunakan for_sale_date jika ada, jika tidak gunakan created_at
+                $item->for_sale_date = $item->for_sale_date ? Carbon::parse($item->for_sale_date) : $item->created_at;
+                $item->days_on_sale = $item->for_sale_date->diffInDays(now());
                 return $item;
             })
-            ->sortBy('sale_date') // Urutkan dari yang terlama
-            ->take(10)
+            ->sortBy('for_sale_date') // Urutkan dari yang terlama
+            ->take(10) // Ambil 10 teratas
             ->values();
 
+        // Siapkan data untuk chart
         $forSaleChartData = [
             'labels' => $allForSale->pluck('name')->toArray(),
             'dates' => $allForSale->map(function ($item) {
-                return $item->sale_date->format('Y-m-d');
+                return $item->for_sale_date->format('Y-m-d');
             })->toArray(),
             'days_on_sale' => $allForSale->pluck('days_on_sale')->toArray(),
             'product_types' => $allForSale->pluck('product_type')->toArray()
         ];
 
-        return view('owner.dashboard', compact(
-            'kambingCount', 'kambingThisMonth', 'kambingLastMonth', 'kambingPercentageChange',
-            'dombaCount', 'dombaThisMonth', 'dombaLastMonth', 'dombaPercentageChange',
-            'userCount', 'userThisMonth', 'userLastMonth', 'userPercentageChange',
-            'users', 'usersa', 'usersWithDomba', 'ownerPercentage',
-            'kambingAvgWeight', 'dombaAvgWeight', 'kambingAvgPrice', 'dombaAvgPrice',
-            'weeklyLabels', 'weeklyKambingCounts', 'weeklyDombaCounts', 'forSaleChartData'
-        ));
+        return view('owner.dashboard', compact('kambingCount', 'kambingThisMonth', 'kambingLastMonth', 'kambingPercentageChange', 'dombaCount', 'dombaThisMonth', 'dombaLastMonth', 'dombaPercentageChange', 'userCount', 'userThisMonth', 'userLastMonth', 'userPercentageChange', 'users', 'usersa', 'usersWithDomba', 'ownerPercentage', 'kambingAvgWeight', 'dombaAvgWeight', 'kambingAvgPrice', 'dombaAvgPrice', 'weeklyLabels', 'weeklyKambingCounts', 'weeklyDombaCounts', 'forSaleChartData'));
     }
 
-    /**
-     * Halaman Perjanjian (View Only untuk Owner)
-     */
     public function perjanjian()
     {
         $users = User::withCount('kambings')->orderBy('kambings_count', 'desc')->take(7)->get();
-        return view('owner.perjanjian', compact('users')); // Arahkan ke view owner
+        return view('owner.perjanjian', compact('users'));
     }
-
-    /**
-     * Halaman Penjualan (Analytics & Monitoring)
-     */
     public function penjualan(Request $request)
     {
-        // Query dasar
-        $ordersQuery = Order::with('user', 'kambing', 'domba')->latest();
+        // Query dasar (existing code)
+        $ordersQuery = \App\Models\Order::with(['user', 'orderable'])->latest();
 
-        // === FILTER ===
+        // === FILTER === (existing code)
         if ($request->status && $request->status !== 'all') {
             $ordersQuery->where('status', $request->status);
         }
@@ -167,43 +149,35 @@ class DashboardController extends Controller
         }
         if ($request->search) {
             $ordersQuery->where(function ($q) use ($request) {
-                $q->where('order_id', 'like', '%' . $request->search . '%')
-                  ->orWhereHas('user', function ($q2) use ($request) {
-                      $q2->where('name', 'like', '%' . $request->search . '%')
-                         ->orWhere('email', 'like', '%' . $request->search . '%');
-                  });
+                $q->where('order_id', 'like', '%' . $request->search . '%')->orWhereHas('user', function ($q2) use ($request) {
+                    $q2->where('name', 'like', '%' . $request->search . '%')->orWhere('email', 'like', '%' . $request->search . '%');
+                });
             });
         }
 
-        // === PAGINATION ===
+        // === PAGINATION === (existing code)
         $orders = $ordersQuery->paginate(10);
 
-        // === STATISTIK ===
+        // === STATISTIK (existing code) ===
         $filteredQuery = clone $ordersQuery;
-        // Reset limit/offset dari pagination untuk hitung total
-        // Note: clone paginate query kadang membawa limit, jadi hati-hati.
-        // Cara aman hitung total tanpa pagination:
-        
-        $totalPenjualan = $orders->total(); 
-        
-        // Total Pendapatan (Hanya yang sukses)
-        $revenueQuery = clone $ordersQuery;
-        // Hapus pagination limit dari query builder jika ada (biasanya di instance paginate udah bersih)
-        $totalPendapatan = Order::whereIn('status', ['settlement', 'capture', 'success'])
-            ->when($request->start_date, fn($q) => $q->whereDate('created_at', '>=', $request->start_date))
-            ->when($request->end_date, fn($q) => $q->whereDate('created_at', '<=', $request->end_date))
-            ->sum('gross_amount');
-
-        $pembeliAktif = Order::whereIn('status', ['settlement', 'capture', 'success'])
+        $totalPenjualan = $orders->total();
+        $totalPendapatan = (clone $filteredQuery)->whereIn('status', ['settlement', 'capture', 'success'])->sum('gross_amount');
+        $pembeliAktif = (clone $filteredQuery)
+            ->whereIn('status', ['settlement', 'capture', 'success'])
             ->distinct('user_id')
             ->count('user_id');
 
-        // === DATA TREND PENJUALAN ===
-        $salesTrendQuery = Order::query(); // Buat query baru bersih
-        if ($request->status && $request->status !== 'all') $salesTrendQuery->where('status', $request->status);
+        // === DATA TREND PENJUALAN (fixed code) ===
+        $salesTrendQuery = clone $ordersQuery;
 
+        // Hapus semua ORDER BY yang ada dari query dasar
+        $salesTrendQuery->reorder();
+
+        // Tentukan rentang tanggal
         $startDate = $request->start_date ? Carbon::parse($request->start_date) : Carbon::now()->subDays(30);
         $endDate = $request->end_date ? Carbon::parse($request->end_date) : Carbon::now();
+
+        // Hitung selisih hari untuk menentukan grouping
         $diffInDays = $startDate->diffInDays($endDate);
 
         if ($diffInDays <= 31) {
@@ -245,8 +219,11 @@ class DashboardController extends Controller
         $counts = $salesTrendData->pluck('count')->toArray();
         $revenues = $salesTrendData->pluck('revenue')->toArray();
 
+        // Validasi jika data kosong
         if (empty($counts)) {
-            $counts = [0]; $revenues = [0]; $labels = ['No Data'];
+            $counts = [0];
+            $revenues = [0];
+            $labels = ['No Data'];
         }
 
         $salesTrend = [
@@ -255,63 +232,114 @@ class DashboardController extends Controller
             'revenues' => $revenues
         ];
 
-        return view('owner.penjualan', compact( // Arahkan ke view owner
-            'orders', 'totalPenjualan', 'totalPendapatan', 'pembeliAktif', 'salesTrend'
+        return view('owner.penjualan', compact(
+            'orders',
+            'totalPenjualan',
+            'totalPendapatan',
+            'pembeliAktif',
+            'salesTrend'
         ));
     }
 
-    // ==========================================
-    // REPORT METHODS (Sesuai Route Owner)
-    // ==========================================
-
-    public function kambingReport()
+    public function perjanjianstore(Request $request)
     {
-        $kambings = Kambing::with(['user', 'histories'])
-            ->latest()
-            ->get();
+        $request->validate([
+            'user_id' => 'required|integer',
+            'goat_id' => 'required|integer',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
+            'annual_offspring' => 'required|integer',
+            'create_at' => 'required|date',
+            'update_at' => 'required|date',
+        ]);
 
-        $stats = [
-            'total' => $kambings->count(),
-            // Logic for_sale = yes
-            'dijual' => $kambings->where('for_sale', 'yes')->count(),
-            // Logic terjual (misal for_sale=no dan ada user pemiliknya selain admin/peternak)
-            // Atau logic sederhana: Total - Dijual
-            'terjual' => $kambings->where('for_sale', 'no')->count(), 
-        ];
+        Perjanjian::create($request->all());
+        // return redirect()->route('owner.perjanjian');
+    }
+    public function updateNotes(Request $request, $orderId)
+    {
+        try {
+            $order = \App\Models\Order::findOrFail($orderId);
 
-        return view('owner.reports.kambing', compact('kambings', 'stats'));
+            $request->validate([
+                'notes' => 'required|string|max:1000',
+            ]);
+
+            $order->owner_notes = $request->notes;
+            $order->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Catatan berhasil diperbarui',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(
+                [
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan saat memperbarui catatan',
+                ],
+                500,
+            );
+        }
     }
 
-    public function dombaReport()
+    public function updateStatus(Request $request, $orderId)
     {
-        $dombas = Domba::with(['user', 'histories'])
-            ->latest()
-            ->get();
+        try {
+            $order = \App\Models\Order::with(['user', 'orderable'])->findOrFail($orderId);
 
-        $stats = [
-            'total' => $dombas->count(),
-            'dijual' => $dombas->where('for_sale', 'yes')->count(),
-            'terjual' => $dombas->where('for_sale', 'no')->count(),
-        ];
+            $status = $request->input('status');
+            $notes = $request->input('notes');
 
-        return view('owner.reports.domba', compact('dombas', 'stats'));
-    }
+            if (!in_array($status, ['settlement', 'cancel'])) {
+                return response()->json(
+                    [
+                        'success' => false,
+                        'message' => 'Status tidak valid',
+                    ],
+                    400,
+                );
+            }
 
-    public function penjualanReport()
-    {
-        $orders = Order::with(['user', 'kambing', 'domba'])
-            ->whereIn('status', ['settlement', 'success', 'capture']) // Gunakan kolom status yang benar
-            ->latest()
-            ->get();
+            $order->status = $status;
+            if ($notes) {
+                $order->owner_notes = $notes;
+            }
+            $order->save();
 
-        $stats = [
-            'total_orders' => $orders->count(),
-            'total_revenue' => $orders->sum('gross_amount'),
-            'average_order' => $orders->avg('gross_amount'),
-            'kambing_sold' => $orders->whereNotNull('kambing_id')->count(),
-            'domba_sold' => $orders->whereNotNull('domba_id')->count(),
-        ];
+            // Update product status
+            $item = $order->orderable;
 
-        return view('owner.reports.penjualan', compact('orders', 'stats'));
+            if ($item instanceof Kambing || $item instanceof Domba) {
+
+                if ($status === 'settlement') {
+                    $item->update([
+                        'for_sale' => 'no',
+                        'is_locked' => false
+                    ]);
+                }
+
+                if ($status === 'cancel') {
+                    $item->update([
+                        'for_sale' => 'yes',
+                        'is_locked' => false
+                    ]);
+                }
+
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $status === 'settlement' ? 'Pembayaran berhasil diterima' : 'Pembayaran ditolak',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(
+                [
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan saat mengupdate status',
+                ],
+                500,
+            );
+        }
     }
 }

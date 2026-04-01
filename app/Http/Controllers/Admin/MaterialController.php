@@ -82,6 +82,9 @@ class MaterialController extends Controller
             'deskripsi' => $request->deskripsi,
         ]);
 
+        if ($request->source === 'inventory') {
+    return back()->with('success', 'Parameter ROP berhasil diperbarui!');
+}
         return redirect()->route('admin.materials.index')
             ->with('success', 'Material berhasil diperbarui');
     }

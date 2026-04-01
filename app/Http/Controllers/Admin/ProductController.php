@@ -44,7 +44,8 @@ class ProductController extends Controller
             'formula_id' => 'nullable|exists:formulas,id',
             'type' => 'required|in:pakan,obat',
             'source' => 'required|in:produksi,pembelian',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'deskripsi' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', // Validasi gambar
         ]);
 
         if ($request->source === 'produksi' && !$request->formula_id) {
@@ -64,6 +65,7 @@ class ProductController extends Controller
             'nama' => $request->nama,
             'harga' => $request->harga,
             'stok' => 0,
+            'deskripsi' => $request->deskripsi,
             'rop' => $request->rop ?? 0,
             'formula_id' => $request->formula_id,
             'type' => $request->type,
@@ -99,7 +101,8 @@ class ProductController extends Controller
             'formula_id' => 'nullable|exists:formulas,id',
             'type' => 'required|in:pakan,obat',
             'source' => 'required|in:produksi,pembelian',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'deskripsi' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', // Validasi gambar
         ]);
 
         if ($request->source === 'produksi' && !$request->formula_id) {
@@ -111,6 +114,7 @@ class ProductController extends Controller
             'kode' => $request->kode,
             'nama' => $request->nama,
             'harga' => $request->harga,
+            'deskripsi' => $request->deskripsi,
             'rop' => $request->rop ?? 0,
             'formula_id' => $request->formula_id,
             'type' => $request->type,
