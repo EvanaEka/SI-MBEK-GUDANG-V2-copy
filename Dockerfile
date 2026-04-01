@@ -13,10 +13,14 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /app
 COPY . .
 
-RUN composer install --optimize-autoloader
+RUN composer install --no-dev --optimize-autoloader
 
 RUN chmod -R 775 storage bootstrap/cache
 
 EXPOSE 8080
 
-CMD php artisan migrate --seed --force && php artisan storage:link && php artisan serve --host=0.0.0.0 --port=${PORT:-8080}
+CMD php artisan config:clear && \
+    php artisan cache:clear && \
+    php artisan migrate --force && \
+    php artisan storage:link && \
+    php -S 0.0.0.0:${PORT:-8080} -t public
