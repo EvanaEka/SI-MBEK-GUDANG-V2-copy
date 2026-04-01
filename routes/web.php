@@ -116,6 +116,15 @@ Route::prefix('owner')->name('owner.')->group(function () {
         ->name('password.update');
 });
 
+Route::get('/test-email', function () {
+    Mail::raw('Test Resend', function ($message) {
+        $message->to('evanaekawijaya14@gmail.com')
+            ->subject('Test Resend');
+    });
+
+    return 'Email terkirim!';
+});
+
 require __DIR__ . '/auth.php';
 require __DIR__ . '/admin.php';
 require __DIR__ . '/owner.php';
