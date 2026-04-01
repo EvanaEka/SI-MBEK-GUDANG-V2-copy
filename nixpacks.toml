@@ -6,8 +6,7 @@ nixPkgs = ["php82",
   "php82Extensions.pdo_mysql"]
 
 [phases.build]
-cmds = ["composer install --no-dev --optimize-autoloader"]
+cmds = ["composer install  --optimize-autoloader"]
 
 [start]
-[start]
-cmd = "php -d extension=gd.so artisan serve --host=0.0.0.0 --port=$PORT"
+cmd = "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT"
