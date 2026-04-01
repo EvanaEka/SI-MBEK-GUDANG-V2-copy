@@ -247,7 +247,8 @@
                                             class="w-full max-w-xs h-64 object-cover rounded-lg shadow-md cursor-pointer"
                                             onclick="showImagePopup('{{ asset($domba->image) }}')" />
                                     @else
-                                        <img src="{{ asset('uploads/default.png') }}" loading="lazy" alt="gambar domba"
+                                        <img src="{{ $product->image ? asset('storage/' . $product->image) : asset('uploads/default.png') }}"
+                                            loading="lazy" alt="gambar domba"
                                             class="w-full max-w-xs h-64 object-cover rounded-lg shadow-md" />
                                     @endif
                                 </div>
@@ -375,117 +376,120 @@
                             <div>
                                 <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Berat Awal (kg)</label>
-                                    <input type="number" step="0.1" name="weight" x-model="domba.weight"
-                                        required
+                                    <input type="number" step="0.1" name="weight" x-model="domba.weight" required
                                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange">
                                 </div>
                                 <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Berat Sekarang
                                         (kg)</label>
-                                    <input type="number" step="0.1" name="weight_now"
-                                        x-model="domba.weight_now" required
+                                    <input type="number" step="0.1" name="weight_now" x-model="domba.weight_now"
+                                        required
                                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-orange">
                                 </div>
                                 <div>
-    <!-- Pilih Status -->
-    <div class="mb-4">
-        <label for="faksin_status" class="block text-sm font-bold mb-2">Status Vaksin</label>
-        <select id="faksin_status"
-            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:ring-orange-400 focus:border-orange-400 focus:outline-none focus:shadow-outline"
-            required>
-            <option value="">-- Pilih Status --</option>
-            <option value="Aktif" {{ $domba->faksin_status != 'Tidak Aktif' ? 'selected' : '' }}>Aktif</option>
-            <option value="Tidak Aktif" {{ $domba->faksin_status == 'Tidak Aktif' ? 'selected' : '' }}>Tidak Aktif</option>
-        </select>
-    </div>
+                                    <!-- Pilih Status -->
+                                    <div class="mb-4">
+                                        <label for="faksin_status" class="block text-sm font-bold mb-2">Status
+                                            Vaksin</label>
+                                        <select id="faksin_status"
+                                            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:ring-orange-400 focus:border-orange-400 focus:outline-none focus:shadow-outline"
+                                            required>
+                                            <option value="">-- Pilih Status --</option>
+                                            <option value="Aktif" {{ $domba->faksin_status != 'Tidak Aktif' ? 'selected' : '' }}>Aktif</option>
+                                            <option value="Tidak Aktif" {{ $domba->faksin_status == 'Tidak Aktif' ? 'selected' : '' }}>Tidak Aktif</option>
+                                        </select>
+                                    </div>
 
-    <!-- Pilih Jenis Vaksin (muncul kalau status = Aktif) -->
-    <div class="mb-4" id="jenis_vaksin_wrapper" style="display: none;">
-        <label for="jenis_vaksin" class="block text-sm font-bold mb-2">Jenis Vaksin</label>
-        <select id="jenis_vaksin"
-            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:ring-orange-400 focus:border-orange-400 focus:outline-none focus:shadow-outline">
-            <option value="">-- Pilih Jenis Vaksin --</option>
-            <option value="Vaksin PMK" {{ $domba->faksin_status == 'Vaksin PMK' ? 'selected' : '' }}>Vaksin PMK</option>
-            <option value="Vaksin Antraks" {{ $domba->faksin_status == 'Vaksin Antraks' ? 'selected' : '' }}>Vaksin Antraks</option>
-            <option value="Vaksin Brucellosis" {{ $domba->faksin_status == 'Vaksin Brucellosis' ? 'selected' : '' }}>Vaksin Brucellosis</option>
-        </select>
-    </div>
+                                    <!-- Pilih Jenis Vaksin (muncul kalau status = Aktif) -->
+                                    <div class="mb-4" id="jenis_vaksin_wrapper" style="display: none;">
+                                        <label for="jenis_vaksin" class="block text-sm font-bold mb-2">Jenis
+                                            Vaksin</label>
+                                        <select id="jenis_vaksin"
+                                            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:ring-orange-400 focus:border-orange-400 focus:outline-none focus:shadow-outline">
+                                            <option value="">-- Pilih Jenis Vaksin --</option>
+                                            <option value="Vaksin PMK" {{ $domba->faksin_status == 'Vaksin PMK' ? 'selected' : '' }}>Vaksin PMK</option>
+                                            <option value="Vaksin Antraks" {{ $domba->faksin_status == 'Vaksin Antraks' ? 'selected' : '' }}>Vaksin Antraks</option>
+                                            <option value="Vaksin Brucellosis" {{ $domba->faksin_status == 'Vaksin Brucellosis' ? 'selected' : '' }}>Vaksin Brucellosis</option>
+                                        </select>
+                                    </div>
 
-    <!-- Hidden input yang dikirim ke server -->
-    <input type="hidden" name="faksin_status" id="faksin_status_hidden">
+                                    <!-- Hidden input yang dikirim ke server -->
+                                    <input type="hidden" name="faksin_status" id="faksin_status_hidden">
 
-</div>
+                                </div>
 
-<script>
-    const statusSelect = document.getElementById('faksin_status');
-    const jenisWrapper = document.getElementById('jenis_vaksin_wrapper');
-    const jenisSelect = document.getElementById('jenis_vaksin');
-    const hiddenInput = document.getElementById('faksin_status_hidden');
+                                <script>
+                                    const statusSelect = document.getElementById('faksin_status');
+                                    const jenisWrapper = document.getElementById('jenis_vaksin_wrapper');
+                                    const jenisSelect = document.getElementById('jenis_vaksin');
+                                    const hiddenInput = document.getElementById('faksin_status_hidden');
 
-    function updateHiddenInput() {
-        if (statusSelect.value === "Aktif") {
-            jenisWrapper.style.display = "block";
-            hiddenInput.value = jenisSelect.value; // hanya simpan jenis vaksin
-        } else {
-            jenisWrapper.style.display = "none";
-            hiddenInput.value = statusSelect.value; // simpan "Tidak Aktif"
-        }
-    }
+                                    function updateHiddenInput() {
+                                        if (statusSelect.value === "Aktif") {
+                                            jenisWrapper.style.display = "block";
+                                            hiddenInput.value = jenisSelect.value; // hanya simpan jenis vaksin
+                                        } else {
+                                            jenisWrapper.style.display = "none";
+                                            hiddenInput.value = statusSelect.value; // simpan "Tidak Aktif"
+                                        }
+                                    }
 
-    // Event listener
-    statusSelect.addEventListener('change', updateHiddenInput);
-    jenisSelect.addEventListener('change', updateHiddenInput);
+                                    // Event listener
+                                    statusSelect.addEventListener('change', updateHiddenInput);
+                                    jenisSelect.addEventListener('change', updateHiddenInput);
 
-    // Jalankan pertama kali supaya data lama muncul
-    updateHiddenInput();
-</script>
+                                    // Jalankan pertama kali supaya data lama muncul
+                                    updateHiddenInput();
+                                </script>
 
 
                                 <div class="mb-4">
-    <label for="health_status" class="block text-sm font-bold mb-2">Status Kesehatan</label>
+                                    <label for="health_status" class="block text-sm font-bold mb-2">Status
+                                        Kesehatan</label>
 
-    <!-- Dropdown -->
-    <select id="health_status_select"
-        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:ring-orange-400 focus:border-orange-400 focus:outline-none focus:shadow-outline"
-        onchange="toggleOtherHealthStatus(this)" required>
-        <option value="">-- Pilih Status --</option>
-        <option value="Sehat" {{ $domba->healt_status == 'Sehat' ? 'selected' : '' }}>Sehat</option>
-        <option value="Tidak Sehat" {{ $domba->healt_status == 'Tidak Sehat' ? 'selected' : '' }}>Tidak Sehat</option>
-        <option value="Lainnya" {{ $domba->healt_status != 'Sehat' && $domba->healt_status != 'Tidak Sehat' ? 'selected' : '' }}>Lainnya</option>
-    </select>
+                                    <!-- Dropdown -->
+                                    <select id="health_status_select"
+                                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:ring-orange-400 focus:border-orange-400 focus:outline-none focus:shadow-outline"
+                                        onchange="toggleOtherHealthStatus(this)" required>
+                                        <option value="">-- Pilih Status --</option>
+                                        <option value="Sehat" {{ $domba->healt_status == 'Sehat' ? 'selected' : '' }}>
+                                            Sehat</option>
+                                        <option value="Tidak Sehat" {{ $domba->healt_status == 'Tidak Sehat' ? 'selected' : '' }}>Tidak Sehat</option>
+                                        <option value="Lainnya" {{ $domba->healt_status != 'Sehat' && $domba->healt_status != 'Tidak Sehat' ? 'selected' : '' }}>Lainnya</option>
+                                    </select>
 
-    <!-- Input teks custom -->
-    <input type="text" id="health_status_custom"
-        placeholder="Masukkan status kesehatan"
-        value="{{ $domba->healt_status != 'Sehat' && $domba->healt_status != 'Tidak Sehat' ? $domba->healt_status : '' }}"
-        class="mt-2 hidden shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:ring-orange-400 focus:border-orange-400 focus:outline-none focus:shadow-outline" />
+                                    <!-- Input teks custom -->
+                                    <input type="text" id="health_status_custom" placeholder="Masukkan status kesehatan"
+                                        value="{{ $domba->healt_status != 'Sehat' && $domba->healt_status != 'Tidak Sehat' ? $domba->healt_status : '' }}"
+                                        class="mt-2 hidden shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:ring-orange-400 focus:border-orange-400 focus:outline-none focus:shadow-outline" />
 
-    <!-- Hidden input yang dikirim ke server -->
-    <input type="hidden" name="healt_status" id="health_status_final" value="{{ $domba->healt_status }}">
-</div>
-<script>
-    const healthSelect = document.getElementById('health_status_select');
-    const healthCustom = document.getElementById('health_status_custom');
-    const healthHidden = document.getElementById('health_status_final');
+                                    <!-- Hidden input yang dikirim ke server -->
+                                    <input type="hidden" name="healt_status" id="health_status_final"
+                                        value="{{ $domba->healt_status }}">
+                                </div>
+                                <script>
+                                    const healthSelect = document.getElementById('health_status_select');
+                                    const healthCustom = document.getElementById('health_status_custom');
+                                    const healthHidden = document.getElementById('health_status_final');
 
-    function toggleOtherHealthStatus(el) {
-        if (el.value === "Lainnya") {
-            healthCustom.classList.remove("hidden");
-            healthHidden.value = healthCustom.value; // simpan input custom
-        } else {
-            healthCustom.classList.add("hidden");
-            healthHidden.value = el.value; // simpan langsung dari dropdown
-        }
-    }
+                                    function toggleOtherHealthStatus(el) {
+                                        if (el.value === "Lainnya") {
+                                            healthCustom.classList.remove("hidden");
+                                            healthHidden.value = healthCustom.value; // simpan input custom
+                                        } else {
+                                            healthCustom.classList.add("hidden");
+                                            healthHidden.value = el.value; // simpan langsung dari dropdown
+                                        }
+                                    }
 
-    // Saat user mengetik di input custom, update hidden input
-    healthCustom.addEventListener("input", function () {
-        healthHidden.value = this.value;
-    });
+                                    // Saat user mengetik di input custom, update hidden input
+                                    healthCustom.addEventListener("input", function () {
+                                        healthHidden.value = this.value;
+                                    });
 
-    // Jalankan pertama kali (agar old()/edit data tetap muncul)
-    toggleOtherHealthStatus(healthSelect);
-</script>
+                                    // Jalankan pertama kali (agar old()/edit data tetap muncul)
+                                    toggleOtherHealthStatus(healthSelect);
+                                </script>
 
 
                                 <div class="mb-4">
@@ -554,7 +558,7 @@
                     customInput.classList.remove('hidden');
                     customInput.value = '';
                     finalInput.value = '';
-                    customInput.addEventListener('input', function() {
+                    customInput.addEventListener('input', function () {
                         finalInput.value = this.value;
                     });
                 } else {

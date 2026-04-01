@@ -247,7 +247,9 @@
                                             class="w-full max-w-xs h-64 object-cover rounded-lg shadow-md cursor-pointer"
                                             onclick="showImagePopup('{{ asset($kambings->image) }}')" />
                                     @else
-                                        <img src="{{ asset('uploads/default.png') }}" loading="lazy"
+                                        <img 
+                                            src="{{ $product->image ? asset('storage/' . $product->image) : asset('uploads/default.png') }}" 
+                                            loading="lazy"
                                             alt="gambar kambing"
                                             class="w-full max-w-xs h-64 object-cover rounded-lg shadow-md" />
                                     @endif
