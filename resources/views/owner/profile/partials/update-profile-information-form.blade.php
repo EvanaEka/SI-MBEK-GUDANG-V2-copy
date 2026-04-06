@@ -5,7 +5,7 @@
         </h2>
 
         <p class="mt-1 text-sm text-gray-600">
-            {{ __("Perbarui informasi profil akun dan alamat email Anda.") }}
+            {{ __("Perbarui foto profil, nama, dan alamat email Anda.") }}
         </p>
     </header>
 
@@ -13,9 +13,28 @@
         @csrf
     </form>
 
-    <form method="post" action="{{ route('owner.profile.update') }}" class="mt-6 space-y-6">
+    {{-- 🔥 WAJIB TAMBAH ENCTYPE BIAR BISA UPLOAD GAMBAR 🔥 --}}
+    <form method="post" action="{{ route('owner.profile.update') }}" enctype="multipart/form-data" class="mt-6 space-y-6">
         @csrf
         @method('patch')
+
+        {{-- 📸 Bagian Upload Foto Profil --}}
+        <div class="flex items-center gap-6">
+            <div class="w-20 h-20 rounded-full overflow-hidden bg-gray-100 border border-gray-200 shadow-sm flex-shrink-0">
+                @php
+                    // Pastikan variabel $user di-load, fallback ke logo kalau belum ada foto
+                    $avatar = $user->profile_picture ? asset('storage/owner_avatars/' . $user->profile_picture) : asset('logo/logosiembek.png');
+                @endphp
+                <img src="{{ $avatar }}" alt="Profile Picture" class="w-full h-full object-cover">
+            </div>
+            <div class="flex-1">
+                <x-input-label for="profile_picture" :value="__('Foto Profil')" />
+                <input type="file" id="profile_picture" name="profile_picture" accept="image/*" 
+                    class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-brand-orange hover:file:bg-orange-100 transition-colors">
+                <p class="text-xs text-gray-400 mt-1">Format: JPG, PNG. Maksimal 2MB.</p>
+                <x-input-error class="mt-2" :messages="$errors->get('profile_picture')" />
+            </div>
+        </div>
 
         <div>
             <x-input-label for="name" :value="__('Nama')" />
@@ -62,6 +81,7 @@
         </div>
     </form>
 </section>
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 @if (session('status') === 'profile-updated')

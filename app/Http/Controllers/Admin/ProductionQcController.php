@@ -58,20 +58,23 @@ class ProductionQcController extends Controller
             }
 
             // Tentukan status akhir
+          // Tentukan status akhir
             if ($failedCritical) {
                 $percentage = 0;
                 $status = 'tidak_layak';
             } else {
-                $percentage = $totalNonCritical > 0
+                // Hitung persentase dan bulatkan DULU sebelum dibandingkan
+                $rawPercentage = $totalNonCritical > 0
                     ? ($passedNonCritical / $totalNonCritical) * 100
                     : 100;
+                
+                $percentage = round($rawPercentage, 2);
 
-                $status = $percentage >= $threshold
-                    ? 'layak'
+                // Bandingkan angka bulat dengan angka bulat untuk keamanan
+                $status = (floatval($percentage) >= floatval($threshold)) 
+                    ? 'layak' 
                     : 'tidak_layak';
             }
-
-            $percentage = round($percentage, 2);
 
             // ✅ Simpan log QC (tambahkan score_non_kritis agar tidak error DB)
             $qc = ProductionQc::create([

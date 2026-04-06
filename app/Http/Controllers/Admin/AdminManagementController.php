@@ -17,10 +17,13 @@ class AdminManagementController extends Controller
             ->where('id', '!=', auth('admin')->id())
             ->get();
         
-        return response()->json([
-            'message' => 'Admins retrieved successfully',
-            'data' => $admins
-        ]);
+        return view('admin.management.index', compact('admins'));
+    }
+
+    // Form Tambah Admin
+    public function create()
+    {
+        return view('admin.management.create');
     }
 
     // Tambah admin baru
@@ -41,10 +44,7 @@ class AdminManagementController extends Controller
             'must_change_password' => true,
         ]);
 
-        return response()->json([
-            'message' => 'Admin created successfully',
-            'data' => $admin
-        ], 201);
+       return redirect()->route('admin.admins.index')->with('success', 'Admin baru berhasil ditambahkan!');
     }
 
     // Detail admin
@@ -52,10 +52,7 @@ class AdminManagementController extends Controller
     {
         $admin = Admin::where('role', 'admin')->findOrFail($id);
         
-        return response()->json([
-            'message' => 'Admin retrieved successfully',
-            'data' => $admin
-        ]);
+       return view('admin.management.show', compact('admin'));
     }
 
     // Update admin
@@ -70,10 +67,7 @@ class AdminManagementController extends Controller
 
         $admin->update($validated);
 
-        return response()->json([
-            'message' => 'Admin updated successfully',
-            'data' => $admin
-        ]);
+       return redirect()->route('admin.admins.index')->with('success', 'Data Admin berhasil diperbarui!');
     }
 
     // Hapus admin
@@ -90,8 +84,6 @@ class AdminManagementController extends Controller
         
         $admin->delete();
 
-        return response()->json([
-            'message' => 'Admin deleted successfully'
-        ]);
+       return redirect()->route('admin.admins.index')->with('success', 'Admin berhasil dihapus!');
     }
 }

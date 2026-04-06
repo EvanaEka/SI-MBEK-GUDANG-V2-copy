@@ -22,19 +22,19 @@
 </head>
 
 <body class="font-sans antialiased">
-    
-    <div>
+    {{-- UBAH DIV INI JADI BEGINI: --}}
+    <div x-data="{ isSidebarOpen: false }">
         {{-- TOP NAVBAR --}}
         <nav class="bg-white border-b border-gray-200 fixed z-30 w-full">
             <div class="px-3 py-3 lg:px-5 lg:pl-3">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center justify-start">
-                        <button id="toggleSidebarMobile" aria-expanded="true" aria-controls="sidebar"
+                       <button @click="isSidebarOpen = !isSidebarOpen"
                             class="lg:hidden mr-2 text-gray-700 hover:text-gray-900 cursor-pointer p-2 hover:bg-gray-100 focus:bg-gray-100 focus:ring-2 focus:ring-gray-100 rounded">
-                            <svg id="toggleSidebarMobileHamburger" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                            <svg x-show="!isSidebarOpen" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                                 <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h6a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path>
                             </svg>
-                            <svg id="toggleSidebarMobileClose" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                            <svg x-show="isSidebarOpen" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="display: none;">
                                 <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
                             </svg>
                         </button>
@@ -53,11 +53,20 @@
                                     <div class="flex items-center">
                                         <span class="hidden sm:flex sm:items-center sm:ms-6 font-medium text-gray-700 px-2">{{ Auth::user()->name }}</span>
                                         <div class="relative" x-data="{ open: false }">
-                                            <button @click="open = !open" class="flex items-center justify-center w-10 h-10 rounded-full bg-brand-orange text-white focus:outline-none focus:ring-2 focus:ring-orange-300" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
-                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                </svg>
-                                            </button>
+                                            <button @click="open = !open" class="flex items-center justify-center w-10 h-10 rounded-full bg-brand-orange text-white focus:outline-none focus:ring-2 focus:ring-orange-300 overflow-hidden shadow" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
+    @php
+        $admin = Auth::guard('admin')->user();
+        $avatar = $admin->profile_picture ? asset('storage/admin_avatars/' . $admin->profile_picture) : null;
+    @endphp
+
+    @if($avatar)
+        <img src="{{ $avatar }}" alt="Profile" class="w-full h-full object-cover">
+    @else
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+    @endif
+</button>
                                             <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-44 bg-white rounded-md shadow-lg py-2 z-50 border border-gray-100" style="display: none;">
                                                 <a href="{{ route('admin.profile.edit') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition">Profil</a>
                                                 <form method="POST" action="{{ route('admin.logout') }}" id="admin-logout-form">
@@ -81,7 +90,10 @@
         <div class="flex overflow-hidden bg-white pt-16">
             
             {{-- SIDEBAR --}}
-            <aside id="sidebar" class="fixed hidden z-20 h-full top-0 left-0 pt-16 flex lg:flex flex-shrink-0 flex-col w-64 transition-width duration-75" aria-label="Sidebar">
+           <aside id="sidebar" 
+                :class="isSidebarOpen ? 'flex' : 'hidden lg:flex'"
+                class="fixed z-20 h-full top-0 left-0 pt-16 flex-shrink-0 flex-col w-64 transition-transform duration-200 bg-white border-r border-gray-200" 
+                aria-label="Sidebar">
                 <div class="relative flex-1 flex flex-col min-h-0 border-r border-gray-200 bg-white pt-0">
                     <div class="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
                         <div class="flex-1 px-3 bg-white divide-y space-y-1">
@@ -109,9 +121,10 @@
                                     </x-sidebar-link>
                                 </li>
 
-                                {{-- Dropdown Tambah (Tetap Pakai HTML Biasa karena Alpine) --}}
-                                <li class="relative" x-data="{ open: {{ request()->routeIs('admin.tambahkambing') || request()->routeIs('admin.tambahdomba') || request()->routeIs('admin.materials.create') || request()->routeIs('admin.products.create') || request()->routeIs('admin.suppliers.create') ? 'true' : 'false' }} }">
+                               {{-- Dropdown Tambah --}}
+                                <li class="relative" x-data="{ open: {{ request()->routeIs('admin.tambahkambing') || request()->routeIs('admin.tambahdomba') || request()->routeIs('admin.materials.create') || request()->routeIs('admin.products.create') || request()->routeIs('admin.suppliers.create') || request()->routeIs('admin.admins.create') ? 'true' : 'false' }} }">
                                     <button @click="open = !open" class="flex items-center justify-between p-2 w-full text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 group {{ request()->routeIs('admin.tambahkambing') || request()->routeIs('admin.tambahdomba') ? 'bg-gray-100' : '' }}">
+                                        {{-- ... (Icon svg dan text Tambah biarkan sama seperti aslinya) ... --}}
                                         <div class="flex items-center">
                                             <svg class="w-5 h-5 text-brand-orange group-hover:text-gray-900 transition duration-75" fill="currentColor" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="m.5 3 .04.87a2 2 0 0 0-.342 1.311l.637 7A2 2 0 0 0 2.826 14H9v-1H2.826a1 1 0 0 1-.995-.91l-.637-7A1 1 0 0 1 2.19 4h11.62a1 1 0 0 1 .996 1.09L14.54 8h1.005l.256-2.819A2 2 0 0 0 13.81 3H9.828a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 6.172 1H2.5a2 2 0 0 0-2 2m5.672-1a1 1 0 0 1 .707.293L7.586 3H2.19q-.362.002-.683.12L1.5 2.98a1 1 0 0 1 1-.98z" /><path d="M13.5 9a.5.5 0 0 1 .5.5V11h1.5a.5.5 0 1 1 0 1H14v1.5a.5.5 0 1 1-1 0V12h-1.5a.5.5 0 0 1 0-1H13V9.5a.5.5 0 0 1 .5-.5" /></svg>
                                             <span class="ml-3 text-left whitespace-nowrap">Tambah</span>
@@ -119,6 +132,11 @@
                                         <svg class="w-4 h-4 text-gray-500 transition-transform duration-200 transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"></path></svg>
                                     </button>
                                     <ul x-show="open" @click.away="open = false" x-transition x-cloak class="mt-2 bg-white shadow-lg rounded-md w-full z-10 overflow-hidden">
+                                        {{-- KHUSUS SUPER ADMIN --}}
+                                        @if(auth('admin')->user()->role === 'super_admin')
+                                            <li><a href="{{ route('admin.admins.create') }}" class="block w-full pl-11 pr-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('admin.admins.create') ? 'bg-orange-50 text-brand-orange font-medium' : '' }}">Admin Baru</a></li>
+                                        @endif
+                                        
                                         <li><a href="{{ route('admin.tambahkambing') }}" class="block w-full pl-11 pr-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('admin.tambahkambing') ? 'bg-orange-50 text-brand-orange font-medium' : '' }}">Kambing</a></li>
                                         <li><a href="{{ route('admin.tambahdomba') }}" class="block w-full pl-11 pr-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('admin.tambahdomba') ? 'bg-orange-50 text-brand-orange font-medium' : '' }}">Domba</a></li>
                                         <li><a href="{{ route('admin.materials.create') }}" class="block w-full pl-11 pr-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('admin.materials.create') ? 'bg-orange-50 text-brand-orange font-medium' : '' }}">Material</a></li>
@@ -127,16 +145,27 @@
                                     </ul>
                                 </li>
 
-                                {{-- Dropdown Master Data (Tetap Pakai HTML Biasa karena Alpine) --}}
-                                <li class="relative" x-data="{ open: {{ request()->routeIs('admin.listkambing') || request()->routeIs('admin.listdomba') || request()->routeIs('admin.materials.index') || request()->routeIs('admin.products.index') || request()->routeIs('admin.suppliers.index') ? 'true' : 'false' }} }">
-                                    <button @click="open = !open" class="flex items-center justify-between p-2 w-full text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 group {{ request()->routeIs('admin.listkambing') || request()->routeIs('admin.listdomba') ? 'bg-gray-100' : '' }}">
+                               {{-- Dropdown Master Data --}}
+                                @php
+                                    $isMasterDataActive = request()->routeIs('admin.listkambing') || request()->routeIs('admin.listdomba') || request()->routeIs('admin.materials.index') || request()->routeIs('admin.products.index') || request()->routeIs('admin.suppliers.index') || request()->routeIs('admin.admins.index');
+                                @endphp
+                                <li class="relative" x-data="{ open: {{ $isMasterDataActive ? 'true' : 'false' }} }">
+                                    <button @click="open = !open" class="flex items-center justify-between p-2 w-full text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 group {{ $isMasterDataActive ? 'bg-gray-100' : '' }}">
                                         <div class="flex items-center">
-                                            <svg class="w-5 h-5 text-gray-500 group-hover:text-gray-900 transition duration-75" fill="currentColor" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M.54 3.87.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.826a2 2 0 0 1-1.991-1.819l-.637-7a2 2 0 0 1 .342-1.31zM2.19 4a1 1 0 0 0-.996 1.09l.637 7a1 1 0 0 0 .995.91h10.348a1 1 0 0 0 .995-.91l.637-7A1 1 0 0 0 13.81 4zm4.69-1.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139q.323-.119.684-.12h5.396z" /></svg>
+                                            {{-- ICON WARNA OREN (Otomatis abu-abu kalau aktif/di-hover) --}}
+                                            <svg class="w-5 h-5 transition duration-75 {{ $isMasterDataActive ? 'text-gray-900' : 'text-brand-orange group-hover:text-gray-900' }}" fill="currentColor" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M.54 3.87.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.826a2 2 0 0 1-1.991-1.819l-.637-7a2 2 0 0 1 .342-1.31zM2.19 4a1 1 0 0 0-.996 1.09l.637 7a1 1 0 0 0 .995.91h10.348a1 1 0 0 0 .995-.91l.637-7A1 1 0 0 0 13.81 4zm4.69-1.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139q.323-.119.684-.12h5.396z" />
+                                            </svg>
                                             <span class="ml-3 text-left whitespace-nowrap">Master Data</span>
                                         </div>
                                         <svg class="w-4 h-4 text-gray-500 transition-transform duration-200 transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"></path></svg>
                                     </button>
                                     <ul x-show="open" @click.away="open = false" x-transition x-cloak class="mt-2 bg-white shadow-lg rounded-md w-full z-10 overflow-hidden">
+                                        {{-- KHUSUS SUPER ADMIN --}}
+                                        @if(auth('admin')->user()->role === 'super_admin')
+                                            <li><a href="{{ route('admin.admins.index') }}" class="block w-full pl-11 pr-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('admin.admins.index') ? 'bg-orange-50 text-brand-orange font-medium' : '' }}">Data Admin</a></li>
+                                        @endif
+                                        
                                         <li><a href="{{ route('admin.listkambing') }}" class="block w-full pl-11 pr-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('admin.listkambing') ? 'bg-orange-50 text-brand-orange font-medium' : '' }}">Kambing</a></li>
                                         <li><a href="{{ route('admin.listdomba') }}" class="block w-full pl-11 pr-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('admin.listdomba') ? 'bg-orange-50 text-brand-orange font-medium' : '' }}">Domba</a></li>
                                         <li><a href="{{ route('admin.materials.index') }}" class="block w-full pl-11 pr-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('admin.materials.index') ? 'bg-orange-50 text-brand-orange font-medium' : '' }}">Material</a></li>
@@ -144,7 +173,7 @@
                                         <li><a href="{{ route('admin.suppliers.index') }}" class="block w-full pl-11 pr-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('admin.suppliers.index') ? 'bg-orange-50 text-brand-orange font-medium' : '' }}">Supplier</a></li>
                                     </ul>
                                 </li>
-
+                                
                                 {{-- Penjualan --}}
                                 <li>
                                     <x-sidebar-link :href="route('admin.penjualan')" :active="request()->routeIs('admin.penjualan')">
@@ -264,7 +293,8 @@
                 </div>
             </aside>
             
-            <div class="bg-gray-900 opacity-50 hidden fixed inset-0 z-10" id="sidebarBackdrop"></div>
+            <div x-show="isSidebarOpen" @click="isSidebarOpen = false" x-transition.opacity 
+                class="bg-gray-900 opacity-50 fixed inset-0 z-10 lg:hidden"></div>
             
             {{-- MAIN CONTENT AREA --}}
             <div id="main-content" class="min-h-screen w-full bg-gray-50 relative overflow-y-auto lg:ml-64">

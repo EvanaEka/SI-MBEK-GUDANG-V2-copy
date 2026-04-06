@@ -25,16 +25,42 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update profile information (name, email, etc.)
+     * Update profile information (name, email, profile picture)
      */
-    public function update(AdminProfileUpdateRequest $request)
+    public function update(Request $request)
     {
         $admin = auth('admin')->user();
 
-        $admin->fill($request->validated());
+        // Validasi input manual karena kita menambahkan profile_picture
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:admins,email,'.$admin->id],
+            'profile_picture' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'], // Maks 2MB
+        ]);
+
+        $admin->fill([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+        ]);
 
         if ($admin->isDirty('email')) {
             $admin->email_verified_at = null;
+        }
+
+        // Handle upload foto profil
+        if ($request->hasFile('profile_picture')) {
+            // Hapus foto lama jika ada dan bukan null
+            if ($admin->profile_picture && Storage::disk('public')->exists('admin_avatars/' . $admin->profile_picture)) {
+                Storage::disk('public')->delete('admin_avatars/' . $admin->profile_picture);
+            }
+
+            $file = $request->file('profile_picture');
+            $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            
+            // Simpan ke storage/app/public/admin_avatars
+            $file->storeAs('admin_avatars', $fileName, 'public');
+            
+            $admin->profile_picture = $fileName;
         }
 
         $admin->save();

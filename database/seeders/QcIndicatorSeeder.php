@@ -19,6 +19,7 @@ class QcIndicatorSeeder extends Seeder
             ['name' => 'Warna sesuai standar', 'is_critical' => false],
             ['name' => 'Tekstur sesuai standar', 'is_critical' => false],
             ['name' => 'Kadar air sesuai', 'is_critical' => false],
+            ['name' => 'Berat / Volume sesuai dengan toleransi', 'is_critical' => false],
         ];
 
         foreach ($indicators as $item) {

@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
 {
@@ -25,16 +26,42 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update profile information (name, email, etc.)
+     * Update profile information (name, email, profile picture)
      */
-    public function update(OwnerProfileUpdateRequest $request)
+    public function update(Request $request)
     {
         $owner = auth('owner')->user();
 
-        $owner->fill($request->validated());
+        // Validasi input manual karena kita menambahkan profile_picture
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:owners,email,'.$owner->id],
+            'profile_picture' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:2048'], // Maks 2MB
+        ]);
+
+        $owner->fill([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+        ]);
 
         if ($owner->isDirty('email')) {
             $owner->email_verified_at = null;
+        }
+
+        // Handle upload foto profil
+        if ($request->hasFile('profile_picture')) {
+            // Hapus foto lama jika ada dan bukan null
+            if ($owner->profile_picture && Storage::disk('public')->exists('owner_avatars/' . $owner->profile_picture)) {
+                Storage::disk('public')->delete('owner_avatars/' . $owner->profile_picture);
+            }
+
+            $file = $request->file('profile_picture');
+            $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            
+            // Simpan ke storage/app/public/owner_avatars
+            $file->storeAs('owner_avatars', $fileName, 'public');
+            
+            $owner->profile_picture = $fileName;
         }
 
         $owner->save();

@@ -23,7 +23,7 @@
 
             {{-- BARIS 1: Stat Cards & Form ROP --}}
             @php $belowRop = $material->isBelowRop(); @endphp
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 <div class="lg:col-span-4 flex flex-col gap-4">
                     <div class="bg-white rounded-xl border {{ $belowRop ? 'border-red-200 bg-red-50/10' : 'border-gray-200' }} shadow-sm p-6 flex-1 flex flex-col justify-center">
                         <p class="text-xs text-gray-400 uppercase tracking-wide font-medium">Stok Saat Ini</p>
@@ -41,9 +41,9 @@
                     </div>
                 </div>
 
-                <div class="lg:col-span-8 bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col justify-between">
-                    <h3 class="text-sm font-semibold text-gray-700 mb-6 flex items-center gap-2">Pengaturan Parameter ROP</h3>
-                    <form method="POST" action="{{ route('owner.materials.update', $material->id) }}" class="space-y-8">
+                <div class="lg:col-span-8 bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                    <h3 class="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">Pengaturan Parameter ROP</h3>
+                    <form method="POST" action="{{ route('owner.materials.update', $material->id) }}" class="space-y-4">
                         @csrf @method('PUT')
                         <input type="hidden" name="nama_bahan" value="{{ $material->nama_bahan }}">
     <input type="hidden" name="satuan" value="{{ $material->satuan }}">

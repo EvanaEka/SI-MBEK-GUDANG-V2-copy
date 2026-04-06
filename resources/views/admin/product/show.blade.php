@@ -16,21 +16,21 @@
                     <h3 class="text-lg font-bold text-white">Informasi Master Produk</h3>
                     <div class="flex gap-2">
                         <button type="button" x-show="!editMode" @click="editMode = true"
-                            class="bg-blue-600 text-white px-4 py-1 rounded text-sm font-bold shadow hover:bg-blue-700">
+                           class="bg-orange-300 text-white px-4 py-1 rounded text-sm font-bold shadow hover:bg-orange-400">
                             Edit Data
                         </button>
 
                         <button type="button" x-show="editMode" @click="editMode = false"
-                            class="bg-gray-500 text-white px-4 py-1 rounded text-sm font-bold shadow hover:bg-gray-600">
+                           class="bg-orange-300 text-white px-4 py-1 rounded text-sm font-bold shadow hover:bg-orange-400">
                             Batal
                         </button>
                         <button type="submit" x-show="editMode"
-                            class="bg-green-600 text-white px-4 py-1 rounded text-sm font-bold shadow hover:bg-green-700">
+                            class=class="bg-white text-brand-orange px-4 py-1 rounded text-sm font-bold shadow hover:bg-orange-400">
                             Simpan Perubahan
                         </button>
 
                         <a href="{{ route('admin.products.index') }}" x-show="!editMode"
-                            class="bg-white text-brand-orange px-4 py-1 rounded text-sm font-bold shadow hover:bg-white-100">
+                           class="bg-white text-brand-orange px-4 py-1 rounded text-sm font-bold shadow hover:bg-white-100">
                             Kembali
                         </a>
                     </div>

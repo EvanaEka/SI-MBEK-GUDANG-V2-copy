@@ -174,6 +174,9 @@ Route::get('/warehouse/activity-log', [WarehouseDashboardController::class, 'act
             Route::delete('profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
             Route::post('change-password', [ProfileController::class, 'changePassword'])->name('password.change');
 
+            // Admin Management (Read-Only untuk Owner)
+            Route::get('admins', [\App\Http\Controllers\Owner\AdminManagementController::class, 'index'])->name('owners.index');
+
             // Kambing 
             Route::get('listkambing', [KambingController::class, 'index'])->name('listkambing');
             Route::get('kambing/{kambing}', [KambingController::class, 'show'])->name('kambing.show');
