@@ -26,5 +26,9 @@
         "datatables.net-responsive-dt": "^3.0.2",
         "jquery": "^3.7.1",
         "preline": "^2.3.0"
+    },
+
+    "engines": {
+        "node": "20.x"
     }
 }
